@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:hive/hive.dart';
-
+import 'booking_screen.dart';
 import 'admin_screen.dart';
 import 'branch_dashboard.dart';
 import 'subuser_dashboard.dart';
