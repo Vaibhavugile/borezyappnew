@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dashboard_screen.dart';
 import 'booking_screen.dart';
-
+import 'booking_list_screen.dart';
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
@@ -16,7 +16,7 @@ class _MainScreenState extends State<MainScreen> {
   final List pages = [
     const DashboardScreen(),
     const Booking(),
-    const Placeholder(),
+    const BookingListScreen(),
     const Placeholder(),
     const Placeholder(),
   ];
