@@ -10,7 +10,27 @@ class Booking extends StatefulWidget {
 }
 
 class _BookingState extends State<Booking> {
+DateTime getFixedPickupTime(DateTime date) {
+  return DateTime(
+    date.year,
+    date.month,
+    date.day,
+    1,
+    0,
+    0,
+  );
+}
 
+DateTime getFixedReturnTime(DateTime date) {
+  return DateTime(
+    date.year,
+    date.month,
+    date.day,
+    23,
+    0,
+    0,
+  );
+}
   int wizardStep = 1;
   List products = [];
   List subUsers = [];
@@ -47,6 +67,9 @@ Map receipt = {};
   List<TextEditingController> productControllers = [];
 double availableCredit = 0;
 String? creditNoteId;
+double appliedCredit = 0;
+bool isButtonDisabled = false;
+
  @override
 void initState() {
   super.initState();
@@ -54,10 +77,12 @@ void initState() {
   fetchSubUsers();
 }
 
-  List getInitialProducts() {
+ List getInitialProducts() {
 
-  DateTime pickupDate = DateTime.now();
-  DateTime returnDate = pickupDate.add(const Duration(days: 2));
+  DateTime pickupDate = getFixedPickupTime(DateTime.now());
+
+  DateTime returnDate =
+      getFixedReturnTime(DateTime.now().add(const Duration(days: 2)));
 
   productControllers.add(TextEditingController());
 
@@ -115,8 +140,8 @@ void initState() {
 }
 
     if(wizardStep == 4){
-      return const Center(child: Text("Payment Step"));
-    }
+  return buildPaymentStep();
+}
 
     return const SizedBox();
   }
@@ -193,7 +218,7 @@ Widget buildProductsStep() {
                       if(pickedDate != null){
 
                         setState(() {
-                          products[index]["pickupDate"] = pickedDate;
+                          products[index]["pickupDate"] = getFixedPickupTime(pickedDate);
                         });
 
                       }
@@ -229,7 +254,7 @@ Widget buildProductsStep() {
                       if(pickedDate != null){
 
                         setState(() {
-                          products[index]["returnDate"] = pickedDate;
+                         products[index]["returnDate"] = getFixedReturnTime(pickedDate);
                         });
 
                       }
@@ -1555,11 +1580,15 @@ Widget buildReviewStep() {
                     borderRadius: BorderRadius.circular(30),
                   ),
                 ),
-                onPressed: (){
-                  setState(() {
-                    wizardStep = 4;
-                  });
-                },
+              onPressed: (){
+
+  calculateGrandTotals();
+
+  setState(() {
+    wizardStep = 4;
+  });
+
+},
                 child: const Text("Proceed to Payment"),
               ),
             ),
@@ -1608,6 +1637,478 @@ Widget buildPriceChip(String title,String value){
     ),
   );
 
+}
+Widget buildPaymentStep() {
+
+  return SingleChildScrollView(
+    padding: const EdgeInsets.symmetric(horizontal:20, vertical:10),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+
+        const SizedBox(height:10),
+
+        const Text(
+          "STEP 04 — Payment",
+          style: TextStyle(
+            fontSize:24,
+            fontWeight:FontWeight.bold,
+            letterSpacing:1.5,
+          ),
+        ),
+
+        const SizedBox(height:4),
+
+        Text(
+          "Finalize the booking payment",
+          style: TextStyle(
+            color: Colors.grey.shade600,
+            fontSize:14,
+          ),
+        ),
+
+        const SizedBox(height:24),
+
+        /// GRAND TOTAL CARD
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            gradient: const LinearGradient(
+              colors:[Color(0xFFD4AF37),Color(0xFFB8962E)]
+            ),
+          ),
+
+          child: Row(
+            children: [
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+
+                    const Text(
+                      "Grand Rent",
+                      style: TextStyle(color:Colors.white70,fontSize:12),
+                    ),
+
+                    const SizedBox(height:4),
+
+                    Text(
+                      "₹${userDetails["grandTotalRent"] ?? 0}",
+                      style: const TextStyle(
+                        color:Colors.white,
+                        fontSize:22,
+                        fontWeight:FontWeight.bold
+                      ),
+                    )
+
+                  ],
+                ),
+              ),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+
+                    const Text(
+                      "Grand Deposit",
+                      style: TextStyle(color:Colors.white70,fontSize:12),
+                    ),
+
+                    const SizedBox(height:4),
+
+                    Text(
+                      "₹${userDetails["grandTotalDeposit"] ?? 0}",
+                      style: const TextStyle(
+                        color:Colors.white,
+                        fontSize:22,
+                        fontWeight:FontWeight.bold
+                      ),
+                    )
+
+                  ],
+                ),
+              ),
+
+            ],
+          ),
+        ),
+
+        const SizedBox(height:24),
+
+        /// DISCOUNTS
+        _premiumInput(
+  label: "Discount On Rent",
+  keyboardType: TextInputType.number,
+  onChanged: (v) {
+    setState(() => userDetails["discountOnRent"] = v);
+    calculateTotals();
+  },
+),
+
+        const SizedBox(height:16),
+
+        _premiumInput(
+          label:"Discount On Deposit",
+            keyboardType: TextInputType.number,
+          onChanged:(v){
+            setState(()=>userDetails["discountOnDeposit"]=v);
+            calculateTotals();
+          },
+        ),
+
+        const SizedBox(height:24),
+
+        /// FINAL TOTALS
+        Row(
+          children: [
+
+            Expanded(
+              child: _priceHighlight(
+                "Final Rent",
+                "₹${userDetails["finalrent"] ?? 0}",
+                Colors.green,
+              ),
+            ),
+
+            const SizedBox(width:14),
+
+            Expanded(
+              child: _priceHighlight(
+                "Final Deposit",
+                "₹${userDetails["finaldeposite"] ?? 0}",
+                Colors.blue,
+              ),
+            ),
+
+          ],
+        ),
+
+        const SizedBox(height:24),
+
+        /// CREDIT
+        if(availableCredit>0)
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              color: const Color(0xFFE8F5E9),
+            ),
+
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+
+                    const Text("Available Credit"),
+
+                    Text(
+                      "₹$availableCredit",
+                      style: const TextStyle(
+                        fontSize:20,
+                        fontWeight:FontWeight.bold,
+                        color:Colors.green,
+                      ),
+                    ),
+
+                  ],
+                ),
+
+                ElevatedButton(
+                  onPressed: handleApplyCredit,
+                  child: const Text("Apply"),
+                )
+
+              ],
+            ),
+          ),
+
+        const SizedBox(height:24),
+
+        /// TOTAL + BALANCE
+        Row(
+          children: [
+
+            Expanded(
+              child: _priceHighlight(
+                "Total Payable",
+                "₹${userDetails["totalamounttobepaid"] ?? 0}",
+                Colors.orange,
+              ),
+            ),
+
+            const SizedBox(width:14),
+
+            Expanded(
+              child: _priceHighlight(
+                "Balance",
+                "₹${userDetails["balance"] ?? 0}",
+                Colors.red,
+              ),
+            ),
+
+          ],
+        ),
+
+        const SizedBox(height:24),
+
+        /// AMOUNT PAID
+        _premiumInput(
+  label: "Amount Paid",
+  keyboardType: TextInputType.number,
+  onChanged: (v) {
+    setState(() => userDetails["amountpaid"] = v);
+    calculateTotals();
+  },
+),
+
+        const SizedBox(height:20),
+
+        /// PAYMENT STATUS
+        DropdownButtonFormField<String>(
+          value:userDetails["paymentstatus"]==""?null:userDetails["paymentstatus"],
+
+          items: const [
+            DropdownMenuItem(value:"fullpayment",child:Text("Full Payment")),
+            DropdownMenuItem(value:"depositpending",child:Text("Deposit Pending")),
+            DropdownMenuItem(value:"partialpayment",child:Text("Partial Payment")),
+          ],
+
+          decoration:_dropdownDecoration("Payment Status"),
+
+          onChanged:(v){
+            setState(()=>userDetails["paymentstatus"]=v);
+          },
+        ),
+
+        const SizedBox(height:20),
+
+        /// FIRST PAYMENT MODE
+        DropdownButtonFormField<String>(
+          value:userDetails["firstpaymentmode"]==""?null:userDetails["firstpaymentmode"],
+
+          items: const [
+
+            DropdownMenuItem(value:"cash",child:Text("Cash")),
+            DropdownMenuItem(value:"upi",child:Text("UPI")),
+            DropdownMenuItem(value:"card",child:Text("Card")),
+            DropdownMenuItem(value:"banktransfer",child:Text("Bank Transfer")),
+
+          ],
+
+          decoration:_dropdownDecoration("First Payment Mode"),
+
+          onChanged:(v){
+            setState(()=>userDetails["firstpaymentmode"]=v);
+          },
+        ),
+
+        const SizedBox(height:16),
+
+        _premiumInput(
+          label:"First Payment Details",
+          onChanged:(v){
+            userDetails["firstpaymentdtails"]=v;
+          },
+        ),
+
+        const SizedBox(height:20),
+
+        /// SECOND PAYMENT MODE
+        DropdownButtonFormField<String>(
+          value:userDetails["secondpaymentmode"]==""?null:userDetails["secondpaymentmode"],
+
+          items: const [
+
+            DropdownMenuItem(value:"cash",child:Text("Cash")),
+            DropdownMenuItem(value:"upi",child:Text("UPI")),
+            DropdownMenuItem(value:"card",child:Text("Card")),
+            DropdownMenuItem(value:"banktransfer",child:Text("Bank Transfer")),
+
+          ],
+
+          decoration:_dropdownDecoration("Second Payment Mode"),
+
+          onChanged:(v){
+            setState(()=>userDetails["secondpaymentmode"]=v);
+          },
+        ),
+
+        const SizedBox(height:16),
+
+        _premiumInput(
+          label:"Second Payment Details",
+          onChanged:(v){
+            userDetails["secondpaymentdetails"]=v;
+          },
+        ),
+
+        const SizedBox(height:20),
+
+        /// SPECIAL NOTE
+        _premiumInput(
+          label:"Special Notes",
+          maxLines:3,
+          onChanged:(v){
+            setState(()=>userDetails["specialnote"]=v);
+          },
+        ),
+
+        const SizedBox(height:30),
+
+        /// BUTTONS
+        Row(
+          children: [
+
+            Expanded(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical:16),
+                ),
+                onPressed: (){
+                  setState(()=>wizardStep=3);
+                },
+                child: const Text("Back"),
+              ),
+            ),
+
+            const SizedBox(width:14),
+
+            Expanded(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFD4AF37),
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical:16),
+                ),
+                onPressed: () {
+
+  calculatePaymentSummary();
+
+  handleConfirmPayment();
+
+},
+                child: const Text(
+                  "Confirm Booking",
+                  style: TextStyle(fontWeight:FontWeight.bold),
+                ),
+              ),
+            ),
+
+          ],
+        ),
+
+        const SizedBox(height:80)
+
+      ],
+    ),
+  );
+}
+Widget _premiumInput({
+  required String label,
+  required Function(String) onChanged,
+  int maxLines = 1,
+  TextInputType keyboardType = TextInputType.text,
+}) {
+
+  return TextField(
+    maxLines: maxLines,
+    keyboardType: keyboardType,
+
+    decoration: InputDecoration(
+      labelText: label,
+
+      filled: true,
+      fillColor: Colors.grey.shade100,
+
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 14,
+      ),
+
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide.none,
+      ),
+
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide.none,
+      ),
+
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(
+          color: Color(0xFFD4AF37),
+          width: 1.5,
+        ),
+      ),
+    ),
+
+    style: const TextStyle(
+      fontSize: 15,
+      fontWeight: FontWeight.w500,
+    ),
+
+    onChanged: onChanged,
+  );
+}
+
+Widget _priceHighlight(String title,String value,Color color){
+
+  return Container(
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(16),
+      color: color.withOpacity(.1),
+      border: Border.all(color: color.withOpacity(.4))
+    ),
+
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+
+        Text(
+          title,
+          style: TextStyle(
+            fontSize:12,
+            color:Colors.grey.shade600
+          ),
+        ),
+
+        const SizedBox(height:4),
+
+        Text(
+          value,
+          style: TextStyle(
+            fontSize:20,
+            fontWeight:FontWeight.bold,
+            color:color
+          ),
+        )
+
+      ],
+    ),
+  );
+}
+
+InputDecoration _dropdownDecoration(String label){
+
+  return InputDecoration(
+    labelText:label,
+    filled:true,
+    fillColor:Colors.grey.shade100,
+    border:OutlineInputBorder(
+      borderRadius:BorderRadius.circular(14),
+      borderSide:BorderSide.none
+    ),
+  );
 }
 void addProductForm(){
 
@@ -1969,6 +2470,108 @@ void handleInputChange(String name, dynamic value) {
   }
 
 }
+void calculateTotals() {
+
+  double rent =
+      double.tryParse(userDetails["grandTotalRent"].toString()) ?? 0;
+
+  double deposit =
+      double.tryParse(userDetails["grandTotalDeposit"].toString()) ?? 0;
+
+  double discountRent =
+      double.tryParse(userDetails["discountOnRent"].toString()) ?? 0;
+
+  double discountDeposit =
+      double.tryParse(userDetails["discountOnDeposit"].toString()) ?? 0;
+
+  double paid =
+      double.tryParse(userDetails["amountpaid"].toString()) ?? 0;
+
+  double finalRent = rent - discountRent;
+  double finalDeposit = deposit - discountDeposit;
+
+  if (finalRent < 0) finalRent = 0;
+  if (finalDeposit < 0) finalDeposit = 0;
+
+  double totalAmount = finalRent + finalDeposit;
+
+  double balance = totalAmount - paid;
+
+  if (balance < 0) balance = 0;
+
+  setState(() {
+
+    userDetails["finalrent"] = finalRent;
+    userDetails["finaldeposite"] = finalDeposit;
+    userDetails["totalamounttobepaid"] = totalAmount;
+    userDetails["balance"] = balance;
+
+  });
+
+}
+void calculateGrandTotals() {
+
+  if(receipt["products"] == null) return;
+
+  List reviewProducts = receipt["products"];
+
+  double grandRent = 0;
+  double grandDeposit = 0;
+
+  for(var product in reviewProducts){
+
+    grandRent +=
+        double.tryParse(product["totalPrice"].toString()) ?? 0;
+
+    grandDeposit +=
+        double.tryParse(product["totaldeposite"].toString()) ?? 0;
+
+  }
+
+  setState(() {
+
+    userDetails["grandTotalRent"] = grandRent;
+    userDetails["grandTotalDeposit"] = grandDeposit;
+
+  });
+
+  calculateTotals();
+}
+void handleApplyCredit(){
+
+  double finalRent =
+      double.tryParse(userDetails["finalrent"].toString()) ?? 0;
+
+  if(availableCredit > 0 && finalRent > 0){
+
+    double creditToApply =
+        availableCredit > finalRent ? finalRent : availableCredit;
+
+    double updatedRent = finalRent - creditToApply;
+
+    double deposit =
+        double.tryParse(userDetails["finaldeposite"].toString()) ?? 0;
+
+    double totalAmount = updatedRent + deposit;
+
+    double paid =
+        double.tryParse(userDetails["amountpaid"].toString()) ?? 0;
+
+    double balance = totalAmount - paid;
+
+    setState(() {
+
+      appliedCredit = creditToApply;
+
+      userDetails["finalrent"] = updatedRent;
+      userDetails["totalamounttobepaid"] = totalAmount;
+      userDetails["balance"] = balance;
+
+    });
+
+  }
+
+}
 Future<void> fetchCreditNote(String contactNumber) async {
 
   try{
@@ -2046,14 +2649,15 @@ Future<void> handleBookingConfirmation() async {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-              "Entered quantities exceed available quantities for one or more products."),
+            "Entered quantities exceed available quantities for one or more products."
+          ),
         ),
       );
 
       return;
     }
 
-    List bookingDetails = [];
+    List<Map<String, dynamic>> bookingDetails = [];
 
     for (var product in products) {
 
@@ -2067,7 +2671,8 @@ Future<void> handleBookingConfirmation() async {
           millisecondsPerDay)
           .ceil();
 
-      String branchCode = "222"; // later use userData.branchCode
+      /// 🔥 BRANCH CODE (same as web)
+    String branchCode = "222"; // later replace with userData.branchCode
 
       var productRef = FirebaseFirestore.instance
           .collection("products")
@@ -2081,26 +2686,27 @@ Future<void> handleBookingConfirmation() async {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content:
-                  Text("Product ${product["productCode"]} not found")),
+            content: Text("Product ${product["productCode"]} not found")
+          ),
         );
 
         return;
       }
 
-      var productData = productDoc.data();
+      Map<String, dynamic> productData =
+          productDoc.data() as Map<String, dynamic>;
 
-      int price = productData?["price"] ?? 0;
-      int deposit = productData?["deposit"] ?? 0;
-      String priceType = productData?["priceType"] ?? "daily";
-      int minimumRentalPeriod = productData?["minimumRentalPeriod"] ?? 1;
-      int extraRent = productData?["extraRent"] ?? 0;
-      String productName = productData?["productName"] ?? "";
+      int price = productData["price"] ?? 0;
+      int deposit = productData["deposit"] ?? 0;
+      String priceType = productData["priceType"] ?? "daily";
+      int minimumRentalPeriod = productData["minimumRentalPeriod"] ?? 1;
+      int extraRent = productData["extraRent"] ?? 0;
+      String productName = productData["productName"] ?? "";
 
       int quantity = int.tryParse(product["quantity"].toString()) ?? 0;
 
       /// 🔥 SAME calculateTotalPrice FUNCTION AS WEB
-      Map calculateTotalPrice(
+      Map<String, dynamic> calculateTotalPrice(
         int price,
         int deposit,
         String priceType,
@@ -2145,19 +2751,18 @@ Future<void> handleBookingConfirmation() async {
           int extraDuration = duration - minimumRentalPeriod;
 
           totalPrice += extraRent * extraDuration * quantity;
-
         }
 
-        int totaldeposite = deposit * quantity;
+        int totalDeposit = deposit * quantity;
 
         return {
           "totalPrice": totalPrice,
-          "totaldeposite": totaldeposite,
-          "grandTotal": totalPrice + totaldeposite
+          "totaldeposite": totalDeposit,
+          "grandTotal": totalPrice + totalDeposit
         };
       }
 
-      Map totalCost = calculateTotalPrice(
+      Map<String, dynamic> totalCost = calculateTotalPrice(
         price,
         deposit,
         priceType,
@@ -2168,17 +2773,17 @@ Future<void> handleBookingConfirmation() async {
         extraRent,
       );
 
-      /// SAME bookingId generation as web
+      /// 🔥 SAME bookingId logic as web
       await getNextBookingId(pickupDateObj, product["productCode"]);
 
       bookingDetails.add({
 
         "productCode": product["productCode"],
-        "productImageUrl": product["image"],
+        "productImageUrl": product["image"] ?? "",
         "productName": productName,
         "price": price,
         "deposit": deposit,
-        "quantity": quantity,
+        "quantity": product["quantity"],
         "numDays": days,
         "totalPrice": totalCost["totalPrice"],
         "totaldeposite": totalCost["totaldeposite"],
@@ -2205,10 +2810,11 @@ Future<void> handleBookingConfirmation() async {
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text("An error occurred while confirming your booking."),
+        content: Text(
+          "An error occurred while confirming your booking."
+        ),
       ),
     );
-
   }
 }
 Future<int?> getNextBookingId(DateTime pickupDateObj, String productCode) async {
@@ -2305,5 +2911,401 @@ void handleDeleteProduct(String productCode){
   });
 
 }
+Future<void> handleConfirmPayment() async {
 
+  setState(() {
+    isButtonDisabled = true;
+  });
+
+  try {
+
+    String branchCode = "222";
+
+    /// GENERATE RECEIPT NUMBER
+    String receiptNumber = await generateReceiptNumber(branchCode);
+
+    /// STOCK VALIDATION
+    for (var product in products) {
+
+      int availableQuantity =
+          int.tryParse(product["availableQuantity"].toString()) ?? 0;
+
+      int requestedQuantity =
+          int.tryParse(product["quantity"].toString()) ?? 0;
+
+      if (requestedQuantity > availableQuantity) {
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Not enough stock for product: ${product["productCode"]}"
+            ),
+          ),
+        );
+
+        setState(() {
+          isButtonDisabled = false;
+        });
+
+        return;
+      }
+    }
+
+    /// CREATE BOOKINGS
+    for (var product in products) {
+
+      DateTime pickupDateObj = product["pickupDate"];
+      DateTime returnDateObj = product["returnDate"];
+
+      var productRef = FirebaseFirestore.instance
+          .collection("products")
+          .doc(branchCode)
+          .collection("products")
+          .doc(product["productCode"]);
+
+      var productDoc = await productRef.get();
+
+      if (!productDoc.exists) continue;
+
+      var productData = productDoc.data();
+
+      int price = productData?["price"] ?? 0;
+      int deposit = productData?["deposit"] ?? 0;
+
+      int quantity =
+          int.tryParse(product["quantity"].toString()) ?? 0;
+
+      int bookingId =
+          await getNextBookingId(pickupDateObj, product["productCode"]) ?? 1;
+
+      await productRef.collection("bookings").add({
+
+        "bookingId": bookingId,
+        "receiptNumber": receiptNumber,
+
+        "pickupDate": pickupDateObj,
+        "returnDate": returnDateObj,
+
+        "quantity": quantity,
+
+        "branchCode": branchCode,
+        "productCode": product["productCode"],
+
+        "userDetails": userDetails,
+
+        "price": price,
+        "deposit": deposit,
+
+        "createdAt": FieldValue.serverTimestamp(),
+
+        "appliedCredit": appliedCredit
+
+      });
+    }
+
+    /// PAYMENT CALCULATION (same as web)
+
+    int amountPaid =
+        int.tryParse(userDetails["amountpaid"].toString()) ?? 0;
+
+    int finalRent =
+        int.tryParse(userDetails["finalrent"].toString()) ?? 0;
+
+    int finalDeposit =
+        int.tryParse(userDetails["finaldeposite"].toString()) ?? 0;
+
+    int rentCollected = amountPaid >= finalRent ? finalRent : amountPaid;
+
+    int rentPending = finalRent - rentCollected;
+
+    int remainingAfterRent = amountPaid - rentCollected;
+
+    int depositCollected =
+        remainingAfterRent > 0
+            ? remainingAfterRent.clamp(0, finalDeposit)
+            : 0;
+
+    int depositPending = finalDeposit - depositCollected;
+
+    int depositReturned = 0;
+
+    int depositWithYou = depositCollected;
+
+    /// OVERALL DATES
+
+    DateTime overallPickup = products
+        .map((p) => p["pickupDate"] as DateTime)
+        .reduce((a, b) => a.isBefore(b) ? a : b);
+
+    DateTime overallReturn = products
+        .map((p) => p["returnDate"] as DateTime)
+        .reduce((a, b) => a.isAfter(b) ? a : b);
+
+    /// PAYMENT DOCUMENT
+
+    var paymentRef = FirebaseFirestore.instance
+        .collection("products")
+        .doc(branchCode)
+        .collection("payments")
+        .doc(receiptNumber);
+
+          List reviewProducts = receipt["products"] ?? [];
+
+    await paymentRef.set({
+
+      "receiptNumber": receiptNumber,
+      "branchCode": branchCode,
+
+      "clientName": userDetails["name"] ?? "",
+      "contact": userDetails["contact"] ?? "",
+
+      "customerBy": userDetails["customerby"] ?? "",
+      "receiptBy": userDetails["receiptby"] ?? "",
+
+      "pickupDate": overallPickup,
+      "returnDate": overallReturn,
+
+      "grandTotalRent":
+          double.tryParse(userDetails["grandTotalRent"].toString()) ?? 0,
+
+      "grandTotalDeposit":
+          double.tryParse(userDetails["grandTotalDeposit"].toString()) ?? 0,
+
+      "discountOnRent":
+          double.tryParse(userDetails["discountOnRent"].toString()) ?? 0,
+
+      "discountOnDeposit":
+          double.tryParse(userDetails["discountOnDeposit"].toString()) ?? 0,
+
+      "finalRent": finalRent,
+      "finalDeposit": finalDeposit,
+
+      "totalAmount":
+          double.tryParse(userDetails["totalamounttobepaid"].toString()) ?? 0,
+
+      "amountPaid": amountPaid,
+
+      "balance":
+          double.tryParse(userDetails["balance"].toString()) ?? 0,
+
+      "paymentStatus": userDetails["paymentstatus"] ?? "pending",
+
+      "firstPaymentMode": userDetails["firstpaymentmode"] ?? "",
+      "firstPaymentDetails": userDetails["firstpaymentdtails"] ?? "",
+
+      "secondPaymentMode": userDetails["secondpaymentmode"] ?? "",
+      "secondPaymentDetails": userDetails["secondpaymentdetails"] ?? "",
+
+      "appliedCredit": appliedCredit,
+
+      "bookingStage": userDetails["stage"] ?? "Booking",
+
+      "specialNote": userDetails["specialnote"] ?? "",
+
+      "rentCollected": rentCollected,
+      "rentPending": rentPending,
+
+      "depositCollected": depositCollected,
+      "depositPending": depositPending,
+
+      "depositReturned": depositReturned,
+      "depositWithYou": depositWithYou,
+
+
+"productsSummary": reviewProducts.map((p) => {
+
+  "productCode": p["productCode"],
+  "productName": p["productName"] ?? "",
+  "quantity": int.tryParse(p["quantity"].toString()) ?? 0,
+
+  "rent": int.tryParse(p["price"].toString()) ?? 0,
+  "deposit": int.tryParse(p["deposit"].toString()) ?? 0,
+
+}).toList(),
+
+      "createdAt": FieldValue.serverTimestamp()
+
+    });
+
+    /// CREATE TRANSACTION (tx1 like web)
+
+    if (amountPaid > 0) {
+
+      await paymentRef
+          .collection("transactions")
+          .doc("tx1")
+          .set({
+
+        "amount": amountPaid,
+        "mode": userDetails["firstpaymentmode"] ?? "",
+        "details": userDetails["firstpaymentdtails"] ?? "",
+
+        "paymentNumber": 1,
+        "type": "bookingPayment",
+
+        "createdAt": FieldValue.serverTimestamp(),
+        "createdBy": userDetails["receiptby"] ?? "System"
+
+      });
+
+    }
+
+    /// LEDGER ENTRIES
+
+    var ledgerRef = FirebaseFirestore.instance
+        .collection("products")
+        .doc(branchCode)
+        .collection("ledger");
+
+    int rentPay = rentCollected;
+    int depositPay = depositCollected;
+
+    if (rentPay > 0) {
+
+      await ledgerRef.add({
+
+        "receiptNumber": receiptNumber,
+        "customerName": userDetails["name"] ?? "",
+        "type": "rentPayment",
+        "amount": rentPay,
+        "mode": userDetails["firstpaymentmode"] ?? "",
+        "details": userDetails["firstpaymentdtails"] ?? "",
+        "createdAt": FieldValue.serverTimestamp()
+
+      });
+    }
+
+    if (depositPay > 0) {
+
+      await ledgerRef.add({
+
+        "receiptNumber": receiptNumber,
+        "customerName": userDetails["name"] ?? "",
+        "type": "depositPayment",
+        "amount": depositPay,
+        "mode": userDetails["firstpaymentmode"] ?? "",
+        "details": userDetails["firstpaymentdtails"] ?? "",
+        "createdAt": FieldValue.serverTimestamp()
+
+      });
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          "Bill Created Successfully. Receipt: $receiptNumber"
+        ),
+      ),
+    );
+
+  } catch (error) {
+
+    print(error);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Error confirming payment"),
+      ),
+    );
+
+  } finally {
+
+    Future.delayed(const Duration(seconds: 10), () {
+
+      if (mounted) {
+        setState(() {
+          isButtonDisabled = false;
+        });
+      }
+
+    });
+
+  }
+}
+void calculatePaymentSummary() {
+
+  double grandRent =
+      double.tryParse(userDetails["grandTotalRent"].toString()) ?? 0;
+
+  double grandDeposit =
+      double.tryParse(userDetails["grandTotalDeposit"].toString()) ?? 0;
+
+  double discountRent =
+      double.tryParse(userDetails["discountOnRent"].toString()) ?? 0;
+
+  double discountDeposit =
+      double.tryParse(userDetails["discountOnDeposit"].toString()) ?? 0;
+
+  double finalRent = grandRent - discountRent;
+  double finalDeposit = grandDeposit - discountDeposit;
+
+  double totalAmount = finalRent + finalDeposit;
+
+  double amountPaid =
+      double.tryParse(userDetails["amountpaid"].toString()) ?? 0;
+
+  double balance = totalAmount - amountPaid;
+
+  userDetails["finalrent"] = finalRent.toInt();
+  userDetails["finaldeposite"] = finalDeposit.toInt();
+  userDetails["totalamounttobepaid"] = totalAmount.toInt();
+  userDetails["balance"] = balance.toInt();
+
+  if (amountPaid == 0) {
+    userDetails["paymentstatus"] = "pending";
+  } else if (amountPaid < totalAmount) {
+    userDetails["paymentstatus"] = "partialpayment";
+  } else {
+    userDetails["paymentstatus"] = "paid";
+  }
+
+  setState(() {});
+}
+
+Future<String> generateReceiptNumber(String branchCode) async {
+
+  try {
+
+    /// Firestore path
+    var receiptCounterRef = FirebaseFirestore.instance
+        .collection("products")
+        .doc(branchCode)
+        .collection("branchCounters")
+        .doc("receipt");
+
+    /// Get current counter
+    var receiptCounterDoc = await receiptCounterRef.get();
+
+    int receiptNumber = 1;
+
+    if (receiptCounterDoc.exists) {
+
+      var data = receiptCounterDoc.data();
+
+      int currentValue = data?["currentValue"] ?? 0;
+
+      receiptNumber = currentValue + 1;
+
+    }
+
+    /// Update counter in Firestore
+    await receiptCounterRef.set({
+      "currentValue": receiptNumber
+    });
+
+    /// Format receipt number
+    String formattedNumber =
+        receiptNumber.toString().padLeft(6, '0');
+
+    return "$branchCode-REC-$formattedNumber";
+
+  } catch (e) {
+
+    print("Error generating receipt number: $e");
+
+    return "$branchCode-REC-000001";
+
+  }
+
+}
 }
