@@ -18,6 +18,8 @@ class BookingDetailsScreen extends StatefulWidget {
 }
 
 class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
+  final TextEditingController specialNoteController = TextEditingController();
+  bool isEditing = false;
 
   @override
   void initState() {
@@ -39,7 +41,6 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
         body: Center(child: CircularProgressIndicator()),
       );
     }
-
     var bookings = provider.bookings;
     var payment = provider.paymentDoc;
     var user = provider.customerDetails ?? {};
@@ -73,6 +74,9 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
             const SizedBox(height:16),
 
             _customerCard(user),
+              const SizedBox(height:18),
+
+  _updateReceiptSection(context),
 
             const SizedBox(height:18),
 
@@ -149,6 +153,162 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
       ),
     );
   }
+  Widget _updateReceiptSection(BuildContext context){
+
+  var provider = Provider.of<BookingDetailsProvider>(context);
+
+  return _cardWrapper(
+
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+
+            const Text(
+              "Update Receipt",
+              style: TextStyle(
+                fontSize:18,
+                fontWeight: FontWeight.w600
+              ),
+            ),
+
+            /// EDIT BUTTON
+            if(!isEditing)
+              IconButton(
+                icon: const Icon(Icons.edit_outlined),
+                onPressed: (){
+                  setState(() {
+                    isEditing = true;
+                    specialNoteController.text = provider.specialNote;
+                  });
+                },
+              )
+
+          ],
+        ),
+
+        const SizedBox(height:18),
+
+        /// STAGE
+        DropdownButtonFormField<String>(
+
+          value: provider.stage,
+
+          decoration: const InputDecoration(
+            labelText: "Stage",
+          ),
+
+          items: const [
+
+            DropdownMenuItem(
+              value: "Booking",
+              child: Text("Booking"),
+            ),
+
+            DropdownMenuItem(
+              value: "pickupPending",
+              child: Text("Pickup Pending"),
+            ),
+
+            DropdownMenuItem(
+              value: "pickup",
+              child: Text("Picked Up"),
+            ),
+
+            DropdownMenuItem(
+              value: "returnPending",
+              child: Text("Return Pending"),
+            ),
+
+            DropdownMenuItem(
+              value: "return",
+              child: Text("Returned"),
+            ),
+
+            DropdownMenuItem(
+              value: "successful",
+              child: Text("Successful"),
+            ),
+
+            DropdownMenuItem(
+              value: "cancelled",
+              child: Text("Cancelled"),
+            ),
+
+          ],
+
+          onChanged: isEditing
+              ? (value){
+                  provider.stage = value!;
+                }
+              : null,
+
+        ),
+
+        const SizedBox(height:16),
+
+        /// SPECIAL NOTE
+        TextField(
+
+          controller: specialNoteController,
+
+          enabled: isEditing,
+
+          decoration: const InputDecoration(
+            labelText: "Special Note",
+          ),
+
+          onChanged: (v){
+            provider.specialNote = v;
+          },
+
+        ),
+
+        const SizedBox(height:20),
+
+        /// SAVE BUTTON
+        if(isEditing)
+          SizedBox(
+            width: double.infinity,
+
+            child: ElevatedButton(
+
+              onPressed: () async {
+
+                provider.userName =
+                    provider.customerDetails?["receiptby"] ?? "Admin";
+
+                await provider.handleSaveSecondPayment();
+                // await provider.fetchDetails();
+
+                if(context.mounted){
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Receipt Updated Successfully"),
+                    ),
+                  );
+
+                }
+
+                setState(() {
+                  isEditing = false;
+                });
+
+              },
+
+              child: const Text("Save Changes"),
+
+            ),
+          )
+
+      ],
+    ),
+  );
+}
 
   /// PRODUCT CARD
   Widget _productCard(List bookings){

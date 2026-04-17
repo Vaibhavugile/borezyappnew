@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DashboardProvider extends ChangeNotifier {
 
-  String branchCode = "7007";
+  String branchCode = "222";
 
   bool loading = true;
 
