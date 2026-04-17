@@ -286,13 +286,59 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
 
                 if(context.mounted){
 
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("Receipt Updated Successfully"),
-                    ),
-                  );
+  ScaffoldMessenger.of(context).showSnackBar(
 
-                }
+    SnackBar(
+
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: const Color(0xFF1B1C1C),
+
+      margin: const EdgeInsets.symmetric(
+        horizontal: 20,
+        vertical: 12,
+      ),
+
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+      ),
+
+      duration: const Duration(seconds: 3),
+
+      content: Row(
+        children: [
+
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: const Color(0xFFD4AF37).withOpacity(.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              Icons.check_circle,
+              color: Color(0xFFD4AF37),
+              size: 20,
+            ),
+          ),
+
+          const SizedBox(width:12),
+
+          const Expanded(
+            child: Text(
+              "Receipt updated successfully",
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+
+        ],
+      ),
+
+    ),
+
+  );
+
+}
 
                 setState(() {
                   isEditing = false;

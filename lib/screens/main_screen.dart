@@ -53,7 +53,11 @@ class _MainScreenState extends State<MainScreen> {
 
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_month_outlined),
-            label: "Bookings",
+            label: "Book Now",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.people_outline),
+            label: "Customers",
           ),
 
           BottomNavigationBarItem(
@@ -61,10 +65,7 @@ class _MainScreenState extends State<MainScreen> {
             label: "Products",
           ),
 
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people_outline),
-            label: "Customers",
-          ),
+          
 
           BottomNavigationBarItem(
             icon: Icon(Icons.bar_chart_outlined),

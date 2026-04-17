@@ -33,208 +33,214 @@ class DashboardProvider extends ChangeNotifier {
 
   Future<void> fetchData() async {
 
-    loading = true;
-    notifyListeners();
+  loading = true;
+  notifyListeners();
 
-    DateTime start =
-        DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
+  DateTime start =
+      DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
 
-    DateTime end = start.add(const Duration(days: 1));
+  DateTime end = start.add(const Duration(days: 1));
 
-    var paymentsRef = FirebaseFirestore.instance
-        .collection("products")
-        .doc(branchCode)
-        .collection("payments");
+  var paymentsRef = FirebaseFirestore.instance
+      .collection("products")
+      .doc(branchCode)
+      .collection("payments");
 
-    var createdSnap = await paymentsRef
+  /// PARALLEL FIRESTORE QUERIES
+  final results = await Future.wait([
+    paymentsRef
         .where("createdAt", isGreaterThanOrEqualTo: start)
         .where("createdAt", isLessThan: end)
-        .get();
+        .get(),
 
-    var pickupSnap = await paymentsRef
+    paymentsRef
         .where("pickupDate", isGreaterThanOrEqualTo: start)
         .where("pickupDate", isLessThan: end)
-        .get();
+        .get(),
 
-    var returnSnap = await paymentsRef
+    paymentsRef
         .where("returnDate", isGreaterThanOrEqualTo: start)
         .where("returnDate", isLessThan: end)
-        .get();
+        .get(),
+  ]);
 
-    createdDocs = [];
-    pickupDocs = [];
-    returnDocs = [];
+  var createdSnap = results[0];
+  var pickupSnap = results[1];
+  var returnSnap = results[2];
 
-    receiptProducts = {};
+  createdDocs = [];
+  pickupDocs = [];
+  returnDocs = [];
 
-    createdCount = 0;
-    pickupTotal = 0;
-    pickupPending = 0;
-    returnTotal = 0;
-    returnPending = 0;
+  receiptProducts = {};
 
-    int productsOutTotal = 0;
-    int productsOutPending = 0;
+  createdCount = 0;
+  pickupTotal = 0;
+  pickupPending = 0;
+  returnTotal = 0;
+  returnPending = 0;
 
-    int productsInTotal = 0;
-    int productsInPending = 0;
+  int productsOutTotal = 0;
+  int productsOutPending = 0;
 
-    double rentPendingCalc = 0;
-    double depositPendingCalc = 0;
+  int productsInTotal = 0;
+  int productsInPending = 0;
 
-    /// CREATED BOOKINGS
-    for (var doc in createdSnap.docs) {
+  double rentPendingCalc = 0;
+  double depositPendingCalc = 0;
 
-      var data = doc.data();
+  /// CREATED BOOKINGS
+  for (var doc in createdSnap.docs) {
 
-      if (data["bookingStage"] == "cancelled") continue;
+    var data = doc.data();
 
-      createdDocs.add(doc);
-      createdCount++;
+    if (data["bookingStage"] == "cancelled") continue;
 
-      String receipt = data["receiptNumber"] ?? "";
+    createdDocs.add(doc);
+    createdCount++;
 
-      if (receipt.isEmpty) continue;
+    String receipt = data["receiptNumber"] ?? "";
 
-      /// Fetch products for created bookings
-      if (!receiptProducts.containsKey(receipt)) {
+    if (receipt.isEmpty) continue;
 
-        var bookings = await FirebaseFirestore.instance
-            .collectionGroup("bookings")
-            .where("receiptNumber", isEqualTo: receipt)
-            .get();
+    if (!receiptProducts.containsKey(receipt)) {
 
-        receiptProducts[receipt] = [];
+      var bookings = await FirebaseFirestore.instance
+          .collectionGroup("bookings")
+          .where("receiptNumber", isEqualTo: receipt)
+          .get();
 
-        for (var booking in bookings.docs) {
+      receiptProducts[receipt] = [];
 
-          var b = booking.data();
+      for (var booking in bookings.docs) {
 
-          int qty = (b["quantity"] ?? 1).toInt();
-          String code = b["productCode"] ?? "-";
+        var b = booking.data();
 
-          receiptProducts[receipt]!.add({
-            "productCode": code,
-            "quantity": qty
-          });
-        }
+        int qty = (b["quantity"] ?? 1).toInt();
+        String code = b["productCode"] ?? "-";
+
+        receiptProducts[receipt]!.add({
+          "productCode": code,
+          "quantity": qty
+        });
       }
     }
-
-    /// PICKUPS
-    for (var doc in pickupSnap.docs) {
-
-      var data = doc.data();
-
-      if (data["bookingStage"] == "cancelled") continue;
-
-      pickupDocs.add(doc);
-      pickupTotal++;
-
-      if (data["bookingStage"] == "pickupPending") {
-        pickupPending++;
-      }
-
-      rentPendingCalc += (data["rentPending"] ?? 0).toDouble();
-      depositPendingCalc += (data["depositPending"] ?? 0).toDouble();
-
-      String receipt = data["receiptNumber"] ?? "";
-
-      if (receipt.isEmpty) continue;
-
-      if (!receiptProducts.containsKey(receipt)) {
-
-        var bookings = await FirebaseFirestore.instance
-            .collectionGroup("bookings")
-            .where("receiptNumber", isEqualTo: receipt)
-            .get();
-
-        receiptProducts[receipt] = [];
-
-        for (var booking in bookings.docs) {
-
-          var b = booking.data();
-
-          int qty = (b["quantity"] ?? 1).toInt();
-          String code = b["productCode"] ?? "-";
-
-          productsOutTotal += qty;
-
-          receiptProducts[receipt]!.add({
-            "productCode": code,
-            "quantity": qty
-          });
-
-          if (data["bookingStage"] == "pickupPending") {
-            productsOutPending += qty;
-          }
-        }
-      }
-    }
-
-    /// RETURNS
-    for (var doc in returnSnap.docs) {
-
-      var data = doc.data();
-
-      if (data["bookingStage"] == "cancelled") continue;
-
-      returnDocs.add(doc);
-      returnTotal++;
-
-      if (data["bookingStage"] == "returnPending") {
-        returnPending++;
-      }
-
-      String receipt = data["receiptNumber"] ?? "";
-
-      if (receipt.isEmpty) continue;
-
-      if (!receiptProducts.containsKey(receipt)) {
-
-        var bookings = await FirebaseFirestore.instance
-            .collectionGroup("bookings")
-            .where("receiptNumber", isEqualTo: receipt)
-            .get();
-
-        receiptProducts[receipt] = [];
-
-        for (var booking in bookings.docs) {
-
-          var b = booking.data();
-
-          int qty = (b["quantity"] ?? 1).toInt();
-          String code = b["productCode"] ?? "-";
-
-          productsInTotal += qty;
-
-          receiptProducts[receipt]!.add({
-            "productCode": code,
-            "quantity": qty
-          });
-
-          if (data["bookingStage"] == "returnPending") {
-            productsInPending += qty;
-          }
-        }
-      }
-    }
-
-    /// FINAL CALCULATIONS
-
-    productsOutToday = productsOutTotal;
-    productsOutDone = productsOutTotal - productsOutPending;
-
-    productsInToday = productsInTotal;
-    productsInDone = productsInTotal - productsInPending;
-
-    rentPendingToday = rentPendingCalc;
-    depositPendingToday = depositPendingCalc;
-
-    loading = false;
-
-    notifyListeners();
   }
+
+  /// PICKUPS
+  for (var doc in pickupSnap.docs) {
+
+    var data = doc.data();
+
+    if (data["bookingStage"] == "cancelled") continue;
+
+    pickupDocs.add(doc);
+    pickupTotal++;
+
+    if (data["bookingStage"] == "pickupPending") {
+      pickupPending++;
+    }
+
+    rentPendingCalc += (data["rentPending"] ?? 0).toDouble();
+    depositPendingCalc += (data["depositPending"] ?? 0).toDouble();
+
+    String receipt = data["receiptNumber"] ?? "";
+
+    if (receipt.isEmpty) continue;
+
+    if (!receiptProducts.containsKey(receipt)) {
+
+      var bookings = await FirebaseFirestore.instance
+          .collectionGroup("bookings")
+          .where("receiptNumber", isEqualTo: receipt)
+          .get();
+
+      receiptProducts[receipt] = [];
+
+      for (var booking in bookings.docs) {
+
+        var b = booking.data();
+
+        int qty = (b["quantity"] ?? 1).toInt();
+        String code = b["productCode"] ?? "-";
+
+        productsOutTotal += qty;
+
+        receiptProducts[receipt]!.add({
+          "productCode": code,
+          "quantity": qty
+        });
+
+        if (data["bookingStage"] == "pickupPending") {
+          productsOutPending += qty;
+        }
+      }
+    }
+  }
+
+  /// RETURNS
+  for (var doc in returnSnap.docs) {
+
+    var data = doc.data();
+
+    if (data["bookingStage"] == "cancelled") continue;
+
+    returnDocs.add(doc);
+    returnTotal++;
+
+    if (data["bookingStage"] == "returnPending") {
+      returnPending++;
+    }
+
+    String receipt = data["receiptNumber"] ?? "";
+
+    if (receipt.isEmpty) continue;
+
+    if (!receiptProducts.containsKey(receipt)) {
+
+      var bookings = await FirebaseFirestore.instance
+          .collectionGroup("bookings")
+          .where("receiptNumber", isEqualTo: receipt)
+          .get();
+
+      receiptProducts[receipt] = [];
+
+      for (var booking in bookings.docs) {
+
+        var b = booking.data();
+
+        int qty = (b["quantity"] ?? 1).toInt();
+        String code = b["productCode"] ?? "-";
+
+        productsInTotal += qty;
+
+        receiptProducts[receipt]!.add({
+          "productCode": code,
+          "quantity": qty
+        });
+
+        if (data["bookingStage"] == "returnPending") {
+          productsInPending += qty;
+        }
+      }
+    }
+  }
+
+  /// FINAL CALCULATIONS
+
+  productsOutToday = productsOutTotal;
+  productsOutDone = productsOutTotal - productsOutPending;
+
+  productsInToday = productsInTotal;
+  productsInDone = productsInTotal - productsInPending;
+
+  rentPendingToday = rentPendingCalc;
+  depositPendingToday = depositPendingCalc;
+
+  loading = false;
+
+  notifyListeners();
+}
 
   void changeDate(DateTime newDate) {
     selectedDate = newDate;
