@@ -48,7 +48,7 @@ class _MainScreenState extends State<MainScreen> {
 
           BottomNavigationBarItem(
             icon: Icon(Icons.dashboard_outlined),
-            label: "Dashboard",
+            label: "Home",
           ),
 
           BottomNavigationBarItem(

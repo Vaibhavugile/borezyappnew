@@ -4,9 +4,11 @@ import 'package:provider/provider.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import 'screens/login_screen.dart';
-import 'providers/user_provider.dart';
 import 'screens/booking_screen.dart';
 import 'screens/main_screen.dart';
+
+import 'providers/user_provider.dart';
+import 'providers/dashboard_provider.dart';   // NEW
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,7 +30,17 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => UserProvider()),
+
+        /// USER STATE
+        ChangeNotifierProvider(
+          create: (_) => UserProvider(),
+        ),
+
+        /// DASHBOARD + BOOKINGS SHARED DATA
+        ChangeNotifierProvider(
+          create: (_) => DashboardProvider()..fetchData(),
+        ),
+
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -37,10 +49,8 @@ class MyApp extends StatelessWidget {
         /// GLOBAL THEME
         theme: ThemeData(
 
-          /// BACKGROUND
           scaffoldBackgroundColor: const Color(0xFFFBF9F8),
 
-          /// PRIMARY COLORS
           primaryColor: const Color(0xFF735C00),
 
           colorScheme: const ColorScheme.light(
@@ -98,7 +108,7 @@ class MyApp extends StatelessWidget {
             ),
           ),
 
-          /// CARD STYLE (FIXED FOR FLUTTER 3.22)
+          /// CARD STYLE
           cardTheme: CardThemeData(
             color: const Color(0xFFF6F3F2),
             elevation: 0,
@@ -122,7 +132,7 @@ class MyApp extends StatelessWidget {
         ),
 
         /// START SCREEN
-       home: const MainScreen(),
+        home: const MainScreen(),
       ),
     );
   }

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import '../providers/dashboard_provider.dart';
+import 'booking_details_screen.dart';
+import '../providers/booking_details_provider.dart';
 
 class BookingListScreen extends StatefulWidget {
   const BookingListScreen({super.key});
@@ -15,134 +18,37 @@ class _BookingListScreenState extends State<BookingListScreen> {
   final Color bg = const Color(0xFFFBF9F8);
   final Color card = const Color(0xFFF6F3F2);
 
-  String branchCode = "7007";
-
-  bool loading = true;
-
-  List createdBookings = [];
-  List pickupBookings = [];
-  List returnBookings = [];
-
   List filteredBookings = [];
 
   String filter = "created";
   String searchText = "";
 
-  DateTime selectedDate = DateTime.now();
-
-  int createdCount = 0;
-  int pickupTotalCount = 0;
-  int pickupPendingCount = 0;
-  int returnTotalCount = 0;
-  int returnPendingCount = 0;
-
   @override
-  void initState() {
-    super.initState();
-    fetchBookings();
-  }
-
-  Future<void> fetchBookings() async {
-
-    loading = true;
-    setState(() {});
-
-    DateTime start =
-        DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
-
-    DateTime end = start.add(const Duration(days: 1));
-
-    var paymentsRef = FirebaseFirestore.instance
-        .collection("products")
-        .doc(branchCode)
-        .collection("payments");
-
-    var createdSnap = await paymentsRef
-        .where("createdAt", isGreaterThanOrEqualTo: start)
-        .where("createdAt", isLessThan: end)
-        .get();
-
-    var pickupSnap = await paymentsRef
-        .where("pickupDate", isGreaterThanOrEqualTo: start)
-        .where("pickupDate", isLessThan: end)
-        .get();
-
-    var returnSnap = await paymentsRef
-        .where("returnDate", isGreaterThanOrEqualTo: start)
-        .where("returnDate", isLessThan: end)
-        .get();
-
-    createdBookings = [];
-    pickupBookings = [];
-    returnBookings = [];
-
-    createdCount = 0;
-    pickupTotalCount = 0;
-    pickupPendingCount = 0;
-    returnTotalCount = 0;
-    returnPendingCount = 0;
-
-    for (var doc in createdSnap.docs) {
-
-      final data = doc.data();
-
-      if (data["bookingStage"] == "cancelled") continue;
-
-      createdBookings.add(doc);
-      createdCount++;
-    }
-
-    for (var doc in pickupSnap.docs) {
-
-      final data = doc.data();
-
-      if (data["bookingStage"] == "cancelled") continue;
-
-      pickupBookings.add(doc);
-      pickupTotalCount++;
-
-      if (data["bookingStage"] == "pickupPending") {
-        pickupPendingCount++;
-      }
-    }
-
-    for (var doc in returnSnap.docs) {
-
-      final data = doc.data();
-
-      if (data["bookingStage"] == "cancelled") continue;
-
-      returnBookings.add(doc);
-      returnTotalCount++;
-
-      if (data["bookingStage"] == "returnPending") {
-        returnPendingCount++;
-      }
-    }
-
+  void didChangeDependencies() {
+    super.didChangeDependencies();
     applyFilter();
-
-    loading = false;
-    setState(() {});
   }
 
   void applyFilter(){
 
+    final provider =
+        Provider.of<DashboardProvider>(context, listen:false);
+
     List source = [];
 
-    if(filter == "created") source = createdBookings;
-    if(filter == "pickupTotal") source = pickupBookings;
+    if(filter == "created") source = provider.createdDocs;
+    if(filter == "pickupTotal") source = provider.pickupDocs;
 
     if(filter == "pickupPending"){
-      source = pickupBookings
+      source = provider.pickupDocs
           .where((d)=>d["bookingStage"]=="pickupPending")
           .toList();
     }
 
-    if(filter == "returnTotal") source = returnBookings;
+    if(filter == "returnTotal") source = provider.returnDocs;
 
     if(filter == "returnPending"){
-      source = returnBookings
+      source = provider.returnDocs
           .where((d)=>d["bookingStage"]=="returnPending")
           .toList();
     }
@@ -167,7 +73,9 @@ class _BookingListScreenState extends State<BookingListScreen> {
       }).toList();
     }
 
-    setState(() {});
+    if(mounted){
+      setState(() {});
+    }
   }
 
   String cleanReceipt(String raw){
@@ -218,100 +126,268 @@ class _BookingListScreenState extends State<BookingListScreen> {
 
   Widget bookingCard(var doc){
 
-    var data = doc.data();
+  final provider =
+      Provider.of<DashboardProvider>(context, listen:false);
 
-    String receipt =
-        cleanReceipt(data["receiptNumber"] ?? "-");
+  var data = doc.data();
 
-    String name = data["clientName"] ?? "";
+  String receipt =
+      cleanReceipt(data["receiptNumber"] ?? "-");
 
-    DateTime? pickup =
-        (data["pickupDate"] as Timestamp?)?.toDate();
+  String name = data["clientName"] ?? "";
 
-    DateTime? ret =
-        (data["returnDate"] as Timestamp?)?.toDate();
+  String stage = data["bookingStage"] ?? "";
 
-    return Container(
+  DateTime? pickup =
+      data["pickupDate"]?.toDate();
+
+  DateTime? ret =
+      data["returnDate"]?.toDate();
+
+  List<Map<String,dynamic>> products =
+      List<Map<String,dynamic>>.from(
+          provider.receiptProducts[data["receiptNumber"]] ?? []);
+
+  Color stageColor(){
+
+    if(stage == "pickupPending") return const Color(0xFFF59E0B);
+    if(stage == "pickedUp") return const Color(0xFF2563EB);
+    if(stage == "returnPending") return const Color(0xFF10B981);
+    if(stage == "returned") return const Color(0xFF6B7280);
+
+    return Colors.grey;
+  }
+
+  return GestureDetector(
+
+    onTap: (){
+
+      Navigator.push(
+  context,
+  MaterialPageRoute(
+    builder: (_) => ChangeNotifierProvider(
+      create: (_) => BookingDetailsProvider(
+        branchCode: provider.branchCode,
+        receiptNumber: data["receiptNumber"],
+      ),
+      child: BookingDetailsScreen(
+        receiptNumber: data["receiptNumber"],
+        branchCode: provider.branchCode,
+      ),
+    ),
+  ),
+);
+
+    },
+
+    child: Container(
 
       margin: const EdgeInsets.only(bottom:18),
 
       padding: const EdgeInsets.all(18),
 
       decoration: BoxDecoration(
-        color: card,
-        borderRadius: BorderRadius.circular(22),
+
+        color: Colors.white,
+
+        borderRadius: BorderRadius.circular(20),
+
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(.05),
+            blurRadius: 18,
+            offset: const Offset(0,8),
+          )
+        ],
+
       ),
 
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
 
+          /// TOP ROW
           Row(
             children: [
 
               Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal:12, vertical:6),
+                    horizontal:12,
+                    vertical:6),
+
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: const Color(0xFFF6F3F2),
                   borderRadius: BorderRadius.circular(10),
                 ),
+
                 child: Text(
                   receipt,
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
-                    fontSize:14,
+                    fontSize:13,
+                    color: Color(0xFF735C00),
                   ),
                 ),
               ),
 
               const Spacer(),
 
-              Text(data["bookingStage"] ?? "")
+              Container(
+
+                padding: const EdgeInsets.symmetric(
+                    horizontal:10,
+                    vertical:4),
+
+                decoration: BoxDecoration(
+                  color: stageColor().withOpacity(.12),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+
+                child: Text(
+                  stage,
+                  style: TextStyle(
+                    fontSize:11,
+                    fontWeight: FontWeight.w600,
+                    color: stageColor(),
+                  ),
+                ),
+              )
+
             ],
           ),
 
           const SizedBox(height:14),
 
-          Text(name,
-              style: const TextStyle(
-                  fontSize:17,
-                  fontWeight: FontWeight.w600)),
+          /// CUSTOMER NAME
+          Text(
+            name,
+            style: const TextStyle(
+                fontSize:17,
+                fontWeight: FontWeight.w600),
+          ),
 
-          const SizedBox(height:16),
+          const SizedBox(height:14),
 
+          /// DATE ROW
           Row(
             children: [
 
-              const Icon(Icons.login,size:18,color:Colors.grey),
+              const Icon(
+                Icons.login,
+                size:16,
+                color: Color(0xFF6B7280),
+              ),
+
               const SizedBox(width:6),
 
-              Text(pickup != null
-                  ? "${pickup.day}/${pickup.month}/${pickup.year}"
-                  : "-"),
+              Text(
+                pickup != null
+                    ? "${pickup.day}/${pickup.month}/${pickup.year}"
+                    : "-",
+                style: const TextStyle(fontSize:13),
+              ),
 
               const SizedBox(width:14),
 
-              const Icon(Icons.arrow_forward,size:16),
+              const Icon(
+                Icons.arrow_forward,
+                size:16,
+                color: Colors.grey,
+              ),
 
               const SizedBox(width:14),
 
-              const Icon(Icons.logout,size:18,color:Colors.grey),
+              const Icon(
+                Icons.logout,
+                size:16,
+                color: Color(0xFF6B7280),
+              ),
+
               const SizedBox(width:6),
 
-              Text(ret != null
-                  ? "${ret.day}/${ret.month}/${ret.year}"
-                  : "-"),
+              Text(
+                ret != null
+                    ? "${ret.day}/${ret.month}/${ret.year}"
+                    : "-",
+                style: const TextStyle(fontSize:13),
+              ),
 
             ],
-          )
+          ),
+
+          const SizedBox(height:16),
+
+          /// PRODUCT TAGS
+          if(products.isNotEmpty)
+
+            Wrap(
+              spacing:8,
+              runSpacing:8,
+              children: products.map((p){
+
+                String code = p["productCode"] ?? "-";
+                int qty = p["quantity"] ?? 1;
+
+                return Container(
+
+                  padding: const EdgeInsets.symmetric(
+                      horizontal:12,
+                      vertical:6),
+
+                  decoration: BoxDecoration(
+
+                    color: const Color(0xFFF8F6F1),
+
+                    borderRadius: BorderRadius.circular(20),
+
+                    border: Border.all(
+                      color: const Color(0xFFE5DFC9),
+                    ),
+
+                  ),
+
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+
+                      const Icon(
+                        Icons.inventory_2_outlined,
+                        size:14,
+                        color: Color(0xFF735C00),
+                      ),
+
+                      const SizedBox(width:4),
+
+                      Text(
+                        "$code × $qty",
+                        style: const TextStyle(
+                          fontSize:12,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF735C00),
+                        ),
+                      ),
+
+                    ],
+                  ),
+                );
+
+              }).toList(),
+            )
+
         ],
       ),
-    );
-  }
-
+    ),
+  );
+}
   @override
   Widget build(BuildContext context){
+
+    final provider = Provider.of<DashboardProvider>(context);
+
+    /// Auto refresh list when provider updates
+    WidgetsBinding.instance.addPostFrameCallback((_){
+      applyFilter();
+    });
 
     return Scaffold(
 
@@ -346,17 +422,13 @@ class _BookingListScreenState extends State<BookingListScreen> {
                     DateTime? picked =
                     await showDatePicker(
                       context: context,
-                      initialDate: selectedDate,
+                      initialDate: provider.selectedDate,
                       firstDate: DateTime(2023),
                       lastDate: DateTime(2030),
                     );
 
                     if(picked != null){
-
-                      selectedDate = picked;
-
-                      fetchBookings();
-
+                      provider.changeDate(picked);
                     }
                   },
 
@@ -376,13 +448,12 @@ class _BookingListScreenState extends State<BookingListScreen> {
                     child: Row(
                       children: [
 
-                        const Icon(Icons.calendar_today,
-                            size:16),
+                        const Icon(Icons.calendar_today,size:16),
 
                         const SizedBox(width:8),
 
                         Text(
-                          "${selectedDate.day}/${selectedDate.month}/${selectedDate.year}",
+                          "${provider.selectedDate.day}/${provider.selectedDate.month}/${provider.selectedDate.year}",
                           style: const TextStyle(
                               fontWeight: FontWeight.w600),
                         ),
@@ -396,7 +467,7 @@ class _BookingListScreenState extends State<BookingListScreen> {
 
                 IconButton(
                   icon: const Icon(Icons.refresh),
-                  onPressed: fetchBookings,
+                  onPressed: provider.refresh,
                 )
 
               ],
@@ -439,27 +510,28 @@ class _BookingListScreenState extends State<BookingListScreen> {
               const EdgeInsets.symmetric(horizontal:20),
               children: [
 
-                filterChip("Created","created",createdCount),
+                filterChip("Created","created",
+                    provider.createdCount),
+
                 const SizedBox(width:10),
 
                 filterChip("Pickup","pickupTotal",
-                    pickupTotalCount),
+                    provider.pickupTotal),
+
                 const SizedBox(width:10),
 
-                filterChip("Pickup Pending",
-                    "pickupPending",
-                    pickupPendingCount),
+                filterChip("Pickup Pending","pickupPending",
+                    provider.pickupPending),
 
                 const SizedBox(width:10),
 
                 filterChip("Return","returnTotal",
-                    returnTotalCount),
+                    provider.returnTotal),
 
                 const SizedBox(width:10),
 
-                filterChip("Return Pending",
-                    "returnPending",
-                    returnPendingCount),
+                filterChip("Return Pending","returnPending",
+                    provider.returnPending),
 
               ],
             ),
@@ -468,7 +540,7 @@ class _BookingListScreenState extends State<BookingListScreen> {
           const SizedBox(height:10),
 
           Expanded(
-            child: loading
+            child: provider.loading
                 ? const Center(
                 child: CircularProgressIndicator())
                 : ListView.builder(
