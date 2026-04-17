@@ -30,6 +30,8 @@ class _DashboardScreenState extends State<DashboardScreen>
   double rentPendingToday = 0;
   double depositPendingToday = 0;
 
+  DateTime selectedDate = DateTime.now();
+
   late AnimationController controller;
 
   @override
@@ -46,10 +48,15 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   Future<void> fetchDashboard() async {
 
+    setState(() {
+      loading = true;
+    });
+
     String branchCode = "7007";
 
-    DateTime today = DateTime.now();
-    DateTime todayStart = DateTime(today.year, today.month, today.day);
+    DateTime todayStart =
+        DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
+
     DateTime tomorrow = todayStart.add(const Duration(days: 1));
 
     var paymentsRef = FirebaseFirestore.instance
@@ -57,7 +64,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         .doc(branchCode)
         .collection("payments");
 
-    /// TODAY BOOKINGS
+    /// BOOKINGS CREATED
     var todaySnap = await paymentsRef
         .where("createdAt", isGreaterThanOrEqualTo: todayStart)
         .where("createdAt", isLessThan: tomorrow)
@@ -73,7 +80,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       }
     }
 
-    /// PICKUP TODAY
+    /// PICKUPS
     var pickupSnap = await paymentsRef
         .where("pickupDate", isGreaterThanOrEqualTo: todayStart)
         .where("pickupDate", isLessThan: tomorrow)
@@ -100,7 +107,6 @@ class _DashboardScreenState extends State<DashboardScreen>
         pickupPendingCount++;
       }
 
-      /// SAFE rent & deposit pending
       rentPendingCalc += (data["rentPending"] ?? 0).toDouble();
       depositPendingCalc += (data["depositPending"] ?? 0).toDouble();
 
@@ -127,7 +133,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       }
     }
 
-    /// RETURN TODAY
+    /// RETURNS
     var returnSnap = await paymentsRef
         .where("returnDate", isGreaterThanOrEqualTo: todayStart)
         .where("returnDate", isLessThan: tomorrow)
@@ -223,6 +229,75 @@ class _DashboardScreenState extends State<DashboardScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
 
+            /// DATE SELECTOR
+            Row(
+              children: [
+
+                GestureDetector(
+
+                  onTap: () async {
+
+                    DateTime? picked =
+                    await showDatePicker(
+                      context: context,
+                      initialDate: selectedDate,
+                      firstDate: DateTime(2023),
+                      lastDate: DateTime(2030),
+                    );
+
+                    if(picked != null){
+
+                      setState(() {
+                        selectedDate = picked;
+                      });
+
+                      fetchDashboard();
+                    }
+                  },
+
+                  child: Container(
+
+                    padding: const EdgeInsets.symmetric(
+                        horizontal:16,
+                        vertical:10),
+
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                          color: Colors.grey.shade300),
+                    ),
+
+                    child: Row(
+                      children: [
+
+                        const Icon(Icons.calendar_today,size:16),
+
+                        const SizedBox(width:8),
+
+                        Text(
+                          "${selectedDate.day}/${selectedDate.month}/${selectedDate.year}",
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w600),
+                        ),
+
+                      ],
+                    ),
+                  ),
+                ),
+
+                const Spacer(),
+
+                IconButton(
+                  icon: const Icon(Icons.refresh),
+                  onPressed: fetchDashboard,
+                )
+
+              ],
+            ),
+
+            const SizedBox(height:24),
+
             headerCard(),
 
             const SizedBox(height:26),
@@ -280,7 +355,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
 
-          const Text("Today's Bookings",
+          const Text("Bookings",
               style: TextStyle(color: Colors.white70,fontSize:14)),
 
           const SizedBox(height:8),
