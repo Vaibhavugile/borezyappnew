@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/booking_details_provider.dart';
-
+import 'package:url_launcher/url_launcher.dart';
 class BookingDetailsScreen extends StatefulWidget {
 
   final String receiptNumber;
@@ -56,8 +56,28 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
       backgroundColor: const Color(0xFFFBF9F8),
 
       appBar: AppBar(
-        title: Text("Receipt ${widget.receiptNumber}"),
-      ),
+
+  title: Text("Receipt ${widget.receiptNumber}"),
+
+  actions: [
+
+    /// WHATSAPP TEMPLATE BUTTON
+    IconButton(
+
+      icon: const Icon(
+  Icons.message,
+  color: Colors.green,
+),
+
+      onPressed: (){
+        _openTemplateModal(context);
+      },
+
+    ),
+
+  ],
+
+),
 
       body: RefreshIndicator(
 
@@ -681,5 +701,239 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
       ),
     );
   }
+ void _openTemplateModal(BuildContext context) {
+
+  var provider = Provider.of<BookingDetailsProvider>(context, listen:false);
+
+  showModalBottomSheet(
+
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+
+    builder: (context) {
+
+      return Container(
+
+        height: MediaQuery.of(context).size.height * 0.55,
+
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(28),
+          ),
+        ),
+
+        child: Column(
+
+          children: [
+
+            /// DRAG HANDLE
+            Container(
+              margin: const EdgeInsets.only(top:12),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+
+            const SizedBox(height:16),
+
+            /// HEADER
+            const Text(
+              "Send WhatsApp Template",
+              style: TextStyle(
+                fontSize:18,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1B1C1C),
+              ),
+            ),
+
+            const SizedBox(height:6),
+
+            Text(
+              "Choose a template to send",
+              style: TextStyle(
+                fontSize:13,
+                color: Colors.grey.shade600,
+              ),
+            ),
+
+            const SizedBox(height:20),
+
+            /// TEMPLATE LIST
+            Expanded(
+
+              child: provider.templates.isEmpty
+                  ? const Center(
+                      child: Text(
+                        "No templates available",
+                        style: TextStyle(
+                          color: Colors.grey,
+                        ),
+                      ),
+                    )
+
+                  : ListView.builder(
+
+                      padding: const EdgeInsets.symmetric(horizontal:20),
+
+                      itemCount: provider.templates.length,
+
+                      itemBuilder: (context,index){
+
+                        Map<String,dynamic> template =
+                            provider.templates[index].data()
+                            as Map<String,dynamic>;
+
+                        return Container(
+
+                          margin: const EdgeInsets.only(bottom:12),
+
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF6F3F2),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+
+                          child: ListTile(
+
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal:16,
+                              vertical:6,
+                            ),
+
+                            leading: Container(
+
+                              width:40,
+                              height:40,
+
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFD4AF37).withOpacity(.15),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+
+                              child: const Icon(
+                                Icons.message_outlined,
+                                color: Color(0xFF735C00),
+                                size:20,
+                              ),
+
+                            ),
+
+                            title: Text(
+                              template["name"] ?? "",
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize:14,
+                              ),
+                            ),
+
+                            subtitle: Text(
+                              "Tap to send WhatsApp message",
+                              style: TextStyle(
+                                fontSize:12,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+
+                            trailing: const Icon(
+                              Icons.arrow_forward_ios,
+                              size:14,
+                              color: Colors.grey,
+                            ),
+
+                            onTap: () async {
+
+                              String message =
+                                  provider.buildWhatsAppMessage(template);
+
+                              String phone =
+                                  provider.customerDetails?["contact"] ?? "";
+
+                              /// CLEAN PHONE
+                              phone = phone
+                                  .replaceAll("+", "")
+                                  .replaceAll(" ", "");
+
+                              if (!phone.startsWith("91")) {
+                                phone = "91$phone";
+                              }
+
+                              await sendWhatsAppMessage(phone, message);
+
+                              if(context.mounted){
+                                Navigator.pop(context);
+                              }
+
+                            },
+
+                          ),
+                        );
+                      },
+                    ),
+            ),
+
+            const SizedBox(height:20)
+
+          ],
+        ),
+      );
+    },
+  );
+}
+
+Future<void> sendWhatsAppMessage(String phone, String message) async {
+
+  try {
+
+    /// CLEAN PHONE NUMBER
+    phone = phone.replaceAll("+", "").replaceAll(" ", "");
+
+    /// ADD INDIA CODE IF MISSING
+    if (!phone.startsWith("91")) {
+      phone = "91$phone";
+    }
+
+    /// ENCODE MESSAGE
+    final encodedMessage = Uri.encodeComponent(message);
+
+    /// PRIMARY WHATSAPP URL
+    final Uri whatsappUrl = Uri.parse(
+      "https://wa.me/$phone?text=$encodedMessage"
+    );
+
+    /// LAUNCH WHATSAPP
+    await launchUrl(
+      whatsappUrl,
+      mode: LaunchMode.externalApplication,
+    );
+
+  } catch (e) {
+
+    print("WhatsApp launch failed: $e");
+
+    /// FALLBACK URL (more compatible)
+    final fallbackUrl = Uri.parse(
+      "https://api.whatsapp.com/send?phone=$phone&text=${Uri.encodeComponent(message)}"
+    );
+
+    try {
+
+      await launchUrl(
+        fallbackUrl,
+        mode: LaunchMode.externalApplication,
+      );
+
+    } catch (e) {
+
+      print("Fallback WhatsApp launch failed: $e");
+
+    }
+
+  }
+
+}
 
 }

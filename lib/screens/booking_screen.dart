@@ -2173,7 +2173,7 @@ Future<void> fetchProductSuggestions(String searchTerm) async {
 
   try {
 
-    String branchCode = "222"; // later from user provider
+    String branchCode = "7007"; // later from user provider
 
     var productsRef = FirebaseFirestore.instance
         .collection("products")
@@ -2240,7 +2240,7 @@ Future<void> fetchProductDetails(String productCode, int index) async {
 
   try {
 
-    String branchCode = "222"; // later replace with provider
+    String branchCode = "7007"; // later replace with provider
 
     /// Firestore reference
     var productRef = FirebaseFirestore.instance
@@ -2324,7 +2324,7 @@ if (quantity <= 0) {
   });
   return;
 }
-    String branchCode = "222";
+    String branchCode = "7007";
 
     /// Fetch product
     var productRef = FirebaseFirestore.instance
@@ -2576,7 +2576,7 @@ Future<void> fetchCreditNote(String contactNumber) async {
 
   try{
 
-    String branchCode = "222"; // later from provider
+    String branchCode = "7007"; // later from provider
 
     var creditRef = FirebaseFirestore.instance
         .collection("products")
@@ -2608,7 +2608,7 @@ Future<void> fetchSubUsers() async {
 
   try {
 
-    String branchCode = "222"; // later from auth
+    String branchCode = "7007"; // later from auth
 
     var ref = FirebaseFirestore.instance
         .collection("products")
@@ -2672,7 +2672,7 @@ Future<void> handleBookingConfirmation() async {
           .ceil();
 
       /// 🔥 BRANCH CODE (same as web)
-    String branchCode = "222"; // later replace with userData.branchCode
+    String branchCode = "7007"; // later replace with userData.branchCode
 
       var productRef = FirebaseFirestore.instance
           .collection("products")
@@ -2825,7 +2825,7 @@ Future<int?> getNextBookingId(DateTime pickupDateObj, String productCode) async 
     }
 
     // Fetch branchCode (same as web)
-    String branchCode = "222"; // later replace with userData.branchCode
+    String branchCode = "7007"; // later replace with userData.branchCode
 
     // Firestore reference
     var productRef = FirebaseFirestore.instance
@@ -2919,7 +2919,7 @@ Future<void> handleConfirmPayment() async {
 
   try {
 
-    String branchCode = "222";
+    String branchCode = "7007";
 
     /// GENERATE RECEIPT NUMBER
     String receiptNumber = await generateReceiptNumber(branchCode);

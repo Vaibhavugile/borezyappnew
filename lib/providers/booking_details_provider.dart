@@ -22,6 +22,9 @@ class BookingDetailsProvider extends ChangeNotifier {
   /// TRANSACTIONS
   List<QueryDocumentSnapshot> transactions = [];
 
+  /// WHATSAPP TEMPLATES
+  List<QueryDocumentSnapshot> templates = [];
+
   /// CUSTOMER DETAILS
   Map<String, dynamic>? customerDetails;
 
@@ -60,12 +63,15 @@ class BookingDetailsProvider extends ChangeNotifier {
 
       if (bookingSnap.docs.isNotEmpty) {
 
-        customerDetails =
-            bookingSnap.docs.first.data()["userDetails"] ?? {};
+        Map<String, dynamic> first =
+            bookingSnap.docs.first.data() as Map<String, dynamic>;
+
+        customerDetails = first["userDetails"] ?? {};
 
         for (var doc in bookingSnap.docs) {
 
-          var data = doc.data();
+          Map<String, dynamic> data =
+              doc.data() as Map<String, dynamic>;
 
           String code = data["productCode"] ?? "";
           int qty = (data["quantity"] ?? 1).toInt();
@@ -106,6 +112,9 @@ class BookingDetailsProvider extends ChangeNotifier {
 
       transactions = txSnap.docs;
 
+      /// FETCH WHATSAPP TEMPLATES
+      await fetchTemplates();
+
     } catch (e) {
 
       print("BookingDetails Error: $e");
@@ -116,147 +125,247 @@ class BookingDetailsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// EXACT STAGE UPDATE FUNCTION (Same logic as Web)
+  /// FETCH WHATSAPP TEMPLATES
+  Future<void> fetchTemplates() async {
 
- Future<void> handleSaveSecondPayment() async {
+    try {
 
-  if (bookings.isEmpty) return;
+      var snap = await FirebaseFirestore.instance
+          .collection("products")
+          .doc(branchCode)
+          .collection("templates")
+          .orderBy("order")
+          .get();
 
-  try {
+      templates = snap.docs;
 
-    WriteBatch batch = FirebaseFirestore.instance.batch();
+    } catch(e){
 
-    List<Map<String, dynamic>> changes = [];
+      print("Template fetch error: $e");
 
-    var currentDetails = bookings.first["userDetails"] ?? {};
-
-    Map<String, dynamic> updates = {};
-
-    /// SECOND PAYMENT MODE
-    if (currentDetails["secondpaymentmode"] != secondPaymentMode &&
-        secondPaymentMode.isNotEmpty) {
-
-      updates["userDetails.secondpaymentmode"] = secondPaymentMode;
-
-      changes.add({
-        "field": "Second Payment Mode",
-        "previous": currentDetails["secondpaymentmode"] ?? "N/A",
-        "updated": secondPaymentMode,
-        "updatedby": userName,
-      });
     }
-
-    /// SECOND PAYMENT DETAILS
-    if (currentDetails["secondpaymentdetails"] != secondPaymentDetails &&
-        secondPaymentDetails.isNotEmpty) {
-
-      updates["userDetails.secondpaymentdetails"] = secondPaymentDetails;
-
-      changes.add({
-        "field": "Second Payment Details",
-        "previous": currentDetails["secondpaymentdetails"] ?? "N/A",
-        "updated": secondPaymentDetails,
-        "updatedby": userName,
-      });
-    }
-
-    /// SPECIAL NOTE
-    if (currentDetails["specialnote"] != specialNote &&
-        specialNote.isNotEmpty) {
-
-      updates["userDetails.specialnote"] = specialNote;
-
-      changes.add({
-        "field": "Special Note",
-        "previous": currentDetails["specialnote"] ?? "N/A",
-        "updated": specialNote,
-        "updatedby": userName,
-      });
-    }
-
-    /// STAGE UPDATE
-    String currentStage = currentDetails["stage"] ?? "";
-
-    if (currentStage != stage && stage.isNotEmpty) {
-
-      updates["userDetails.stage"] = stage;
-
-      if (stage == "successful") {
-        updates["userDetails.stageUpdatedAt"] =
-            FieldValue.serverTimestamp();
-      }
-
-      if (stage == "cancelled") {
-        updates["userDetails.stageCancelledAt"] =
-            FieldValue.serverTimestamp();
-      }
-
-      changes.add({
-        "field": "Stage",
-        "previous": currentStage.isEmpty ? "N/A" : currentStage,
-        "updated": stage,
-        "updatedby": userName,
-      });
-    }
-
-    if (changes.isEmpty) {
-      print("No changes detected");
-      return;
-    }
-
-    /// ACTIVITY LOG ENTRY
-    Map<String, dynamic> newLogEntry = {
-      "action":
-          "Updated:\n${changes.map((c) => '${c["field"]} updated from \"${c["previous"]}\" to \"${c["updated"]}\" by \"${c["updatedby"]}\"').join("\n\n")}",
-      "timestamp": DateTime.now().toIso8601String(),
-      "updates": changes
-    };
-
-    /// UPDATE ALL BOOKINGS
-    for (var booking in bookings) {
-
-      Map data = booking.data() as Map;
-
-      /// SAFE ARCHIVED CHECK
-      if (data.containsKey("archived") && data["archived"] == true) {
-        continue;
-      }
-
-      var bookingRef = booking.reference;
-
-      batch.update(bookingRef, {
-        ...updates,
-        "activityLog": FieldValue.arrayUnion([newLogEntry]),
-      });
-    }
-
-    await batch.commit();
-
-    /// SYNC STAGE TO PAYMENT DOC
-    var paymentRef = FirebaseFirestore.instance
-        .collection("products")
-        .doc(branchCode)
-        .collection("payments")
-        .doc(receiptNumber);
-
-    await paymentRef.update({
-      "bookingStage": stage
-    });
-
-    /// UPDATE LOCAL STATE
-    if (paymentDoc != null) {
-      paymentDoc!["bookingStage"] = stage;
-    }
-
-    notifyListeners();
-
-    print("Receipt updated for all products");
-
-  } catch (error) {
-
-    print("Failed to update receipt: $error");
 
   }
+
+  /// STAGE UPDATE FUNCTION
+
+  Future<void> handleSaveSecondPayment() async {
+
+    if (bookings.isEmpty) return;
+
+    try {
+
+      WriteBatch batch = FirebaseFirestore.instance.batch();
+
+      List<Map<String, dynamic>> changes = [];
+
+      Map<String, dynamic> currentDetails =
+          bookings.first["userDetails"] ?? {};
+
+      Map<String, dynamic> updates = {};
+
+      /// SPECIAL NOTE
+      if (currentDetails["specialnote"] != specialNote &&
+          specialNote.isNotEmpty) {
+
+        updates["userDetails.specialnote"] = specialNote;
+
+        changes.add({
+          "field": "Special Note",
+          "previous": currentDetails["specialnote"] ?? "N/A",
+          "updated": specialNote,
+          "updatedby": userName,
+        });
+      }
+
+      /// STAGE UPDATE
+      String currentStage = currentDetails["stage"] ?? "";
+
+      if (currentStage != stage && stage.isNotEmpty) {
+
+        updates["userDetails.stage"] = stage;
+
+        if (stage == "successful") {
+          updates["userDetails.stageUpdatedAt"] =
+              FieldValue.serverTimestamp();
+        }
+
+        if (stage == "cancelled") {
+          updates["userDetails.stageCancelledAt"] =
+              FieldValue.serverTimestamp();
+        }
+
+        changes.add({
+          "field": "Stage",
+          "previous": currentStage.isEmpty ? "N/A" : currentStage,
+          "updated": stage,
+          "updatedby": userName,
+        });
+      }
+
+      if (changes.isEmpty) {
+        print("No changes detected");
+        return;
+      }
+
+      /// ACTIVITY LOG
+      Map<String, dynamic> newLogEntry = {
+
+        "action":
+        "Updated:\n${changes.map((c) => '${c["field"]} updated from \"${c["previous"]}\" to \"${c["updated"]}\" by \"${c["updatedby"]}\"').join("\n\n")}",
+
+        "timestamp": DateTime.now().toIso8601String(),
+
+        "updates": changes
+
+      };
+
+      /// UPDATE BOOKINGS
+      for (var booking in bookings) {
+
+        Map<String, dynamic> data =
+            booking.data() as Map<String, dynamic>;
+
+        if (data.containsKey("archived") && data["archived"] == true) {
+          continue;
+        }
+
+        var bookingRef = booking.reference;
+
+        batch.update(bookingRef, {
+          ...updates,
+          "activityLog": FieldValue.arrayUnion([newLogEntry]),
+        });
+      }
+
+      await batch.commit();
+
+      /// SYNC PAYMENT DOC
+      var paymentRef = FirebaseFirestore.instance
+          .collection("products")
+          .doc(branchCode)
+          .collection("payments")
+          .doc(receiptNumber);
+
+      await paymentRef.update({
+        "bookingStage": stage
+      });
+
+      if (paymentDoc != null) {
+        paymentDoc!["bookingStage"] = stage;
+      }
+
+      notifyListeners();
+
+      print("Receipt updated for all products");
+
+    } catch (error) {
+
+      print("Failed to update receipt: $error");
+
+    }
+  }
+
+  /// WHATSAPP MESSAGE BUILDER
+  String buildWhatsAppMessage(Map template) {
+
+  if (bookings.isEmpty) return "";
+
+  Map<String, dynamic> booking =
+      bookings.first.data() as Map<String, dynamic>;
+
+  var user = customerDetails ?? {};
+  var payment = paymentDoc ?? {};
+
+  String contactNo = user["contact"] ?? "";
+
+  Timestamp? createdAt = booking["createdAt"];
+  Timestamp? pickupDate = booking["pickupDate"];
+  Timestamp? returnDate = booking["returnDate"];
+
+  /// PRODUCTS
+  List<Map<String, dynamic>> productsList = bookings.map((doc) {
+
+    Map<String, dynamic> data =
+        doc.data() as Map<String, dynamic>;
+
+    return {
+      "productCode": data["productCode"] ?? "",
+      "productName": data["productName"] ?? "",
+      "quantity": data["quantity"] ?? ""
+    };
+
+  }).toList();
+
+  String productsString =
+      productsList.map((p) => "${p["productCode"]} : ${p["quantity"]}")
+      .join(", ");
+
+  String productsString1 =
+      productsList.map((p) => "${p["productName"]}")
+      .join(", ");
+
+  String templateBody = template["body"] ?? "";
+
+  String message = templateBody
+      .replaceAll('{clientName}', user["name"] ?? '')
+      .replaceAll('{clientEmail}', user["email"] ?? '')
+      .replaceAll('{CustomerBy}', user["customerby"] ?? '')
+      .replaceAll('{ReceiptBy}', user["receiptby"] ?? '')
+      .replaceAll('{Alterations}', user["alterations"] ?? '')
+      .replaceAll('{SpecialNote}', user["specialnote"] ?? '')
+
+      /// RENT
+      .replaceAll('{GrandTotalRent}', "${user["grandTotalRent"] ?? ''}")
+      .replaceAll('{DiscountOnRent}', "${user["discountOnRent"] ?? ''}")
+      .replaceAll('{FinalRent}', "${user["finalrent"] ?? ''}")
+
+      /// DEPOSIT
+      .replaceAll('{GrandTotalDeposit}', "${user["grandTotalDeposit"] ?? ''}")
+      .replaceAll('{DiscountOnDeposit}', "${user["discountOnDeposit"] ?? ''}")
+      .replaceAll('{FinalDeposit}', "${user["finaldeposite"] ?? ''}")
+
+      /// PAYMENT
+      .replaceAll('{AmountToBePaid}', "${user["totalamounttobepaid"] ?? ''}")
+      .replaceAll('{AmountPaid}', "${user["amountpaid"] ?? ''}")
+      .replaceAll('{Balance}', "${user["balance"] ?? ''}")
+      .replaceAll('{PaymentStatus}', user["paymentstatus"] ?? '')
+
+      /// PAYMENT MODES
+      .replaceAll('{FirstPaymentMode}', user["firstpaymentmode"] ?? '')
+      .replaceAll('{FirstPaymentDetails}', user["firstpaymentdtails"] ?? '')
+      .replaceAll('{SecondPaymentMode}', user["secondpaymentmode"] ?? '')
+      .replaceAll('{SecondPaymentDetails}', user["secondpaymentdetails"] ?? '')
+
+      /// PRODUCTS
+      .replaceAll('{Products}', productsString)
+      .replaceAll('{Products1}', productsString1)
+
+      /// DATES
+      .replaceAll(
+          '{createdAt}',
+          createdAt != null
+              ? createdAt.toDate().toString().split(" ")[0]
+              : '')
+      .replaceAll(
+          '{pickupDate}',
+          pickupDate != null
+              ? pickupDate.toDate().toString().split(" ")[0]
+              : '')
+      .replaceAll(
+          '{returnDate}',
+          returnDate != null
+              ? returnDate.toDate().toString().split(" ")[0]
+              : '')
+
+      /// BASIC INFO
+      .replaceAll('{receiptNumber}', receiptNumber)
+      .replaceAll('{stage}', stage)
+      .replaceAll('{ContactNo}', contactNo)
+      .replaceAll('{IdentityProof}', user["identityproof"] ?? '')
+      .replaceAll('{IdentityNumber}', user["identitynumber"] ?? '');
+
+  return message;
 }
 
 }

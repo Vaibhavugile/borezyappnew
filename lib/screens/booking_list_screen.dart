@@ -77,7 +77,28 @@ class _BookingListScreenState extends State<BookingListScreen> {
       setState(() {});
     }
   }
+void openWhatsAppTemplates(BuildContext context, String receiptNumber) {
 
+  final dashboardProvider =
+      Provider.of<DashboardProvider>(context, listen:false);
+
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => ChangeNotifierProvider(
+        create: (_) => BookingDetailsProvider(
+          branchCode: dashboardProvider.branchCode,
+          receiptNumber: receiptNumber,
+        )..fetchDetails(),
+        child: BookingDetailsScreen(
+          receiptNumber: receiptNumber,
+          branchCode: dashboardProvider.branchCode,
+        ),
+      ),
+    ),
+  );
+
+}
   String cleanReceipt(String raw){
 
     List parts = raw.split("-");
@@ -124,7 +145,7 @@ class _BookingListScreenState extends State<BookingListScreen> {
     );
   }
 
-  Widget bookingCard(var doc){
+ Widget bookingCard(var doc) {
 
   final provider =
       Provider.of<DashboardProvider>(context, listen:false);
@@ -158,223 +179,310 @@ class _BookingListScreenState extends State<BookingListScreen> {
     return Colors.grey;
   }
 
-  return GestureDetector(
+  return Dismissible(
 
-    onTap: (){
+    key: Key(data["receiptNumber"]),
 
-      Navigator.push(
-  context,
-  MaterialPageRoute(
-    builder: (_) => ChangeNotifierProvider(
-      create: (_) => BookingDetailsProvider(
-        branchCode: provider.branchCode,
-        receiptNumber: data["receiptNumber"],
-      ),
-      child: BookingDetailsScreen(
-        receiptNumber: data["receiptNumber"],
-        branchCode: provider.branchCode,
-      ),
-    ),
-  ),
-);
+    confirmDismiss: (direction) async {
 
+      /// SWIPE RIGHT → WHATSAPP
+      if(direction == DismissDirection.startToEnd){
+
+        openWhatsAppTemplates(
+          context,
+          data["receiptNumber"],
+        );
+
+        return false;
+      }
+
+      /// SWIPE LEFT → OPEN BOOKING
+      if(direction == DismissDirection.endToStart){
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ChangeNotifierProvider(
+              create: (_) => BookingDetailsProvider(
+                branchCode: provider.branchCode,
+                receiptNumber: data["receiptNumber"],
+              ),
+              child: BookingDetailsScreen(
+                receiptNumber: data["receiptNumber"],
+                branchCode: provider.branchCode,
+              ),
+            ),
+          ),
+        );
+
+        return false;
+      }
+
+      return false;
     },
 
-    child: Container(
-
-      margin: const EdgeInsets.only(bottom:18),
-
-      padding: const EdgeInsets.all(18),
-
+    /// RIGHT SWIPE BACKGROUND
+    background: Container(
+      alignment: Alignment.centerLeft,
+      padding: const EdgeInsets.symmetric(horizontal:20),
       decoration: BoxDecoration(
+        color: Colors.green,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.message,color: Colors.white),
+          SizedBox(width:8),
+          Text(
+            "WhatsApp",
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
+          )
+        ],
+      ),
+    ),
 
-        color: Colors.white,
+    /// LEFT SWIPE BACKGROUND
+    secondaryBackground: Container(
+      alignment: Alignment.centerRight,
+      padding: const EdgeInsets.symmetric(horizontal:20),
+      decoration: BoxDecoration(
+        color: Colors.blueGrey,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: const Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Text(
+            "Open",
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          SizedBox(width:8),
+          Icon(Icons.open_in_new,color: Colors.white)
+        ],
+      ),
+    ),
+
+    child: Material(
+      color: Colors.transparent,
+
+      child: InkWell(
 
         borderRadius: BorderRadius.circular(20),
 
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(.05),
-            blurRadius: 18,
-            offset: const Offset(0,8),
-          )
-        ],
+        onTap: (){
 
-      ),
-
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-
-          /// TOP ROW
-          Row(
-            children: [
-
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal:12,
-                    vertical:6),
-
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF6F3F2),
-                  borderRadius: BorderRadius.circular(10),
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ChangeNotifierProvider(
+                create: (_) => BookingDetailsProvider(
+                  branchCode: provider.branchCode,
+                  receiptNumber: data["receiptNumber"],
                 ),
-
-                child: Text(
-                  receipt,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize:13,
-                    color: Color(0xFF735C00),
-                  ),
+                child: BookingDetailsScreen(
+                  receiptNumber: data["receiptNumber"],
+                  branchCode: provider.branchCode,
                 ),
               ),
+            ),
+          );
 
-              const Spacer(),
+        },
 
-              Container(
+        child: Container(
 
-                padding: const EdgeInsets.symmetric(
-                    horizontal:10,
-                    vertical:4),
+          margin: const EdgeInsets.only(bottom:18),
 
-                decoration: BoxDecoration(
-                  color: stageColor().withOpacity(.12),
-                  borderRadius: BorderRadius.circular(20),
-                ),
+          padding: const EdgeInsets.all(18),
 
-                child: Text(
-                  stage,
-                  style: TextStyle(
-                    fontSize:11,
-                    fontWeight: FontWeight.w600,
-                    color: stageColor(),
-                  ),
-                ),
+          decoration: BoxDecoration(
+
+            color: Colors.white,
+
+            borderRadius: BorderRadius.circular(20),
+
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(.05),
+                blurRadius: 18,
+                offset: const Offset(0,8),
               )
-
             ],
+
           ),
 
-          const SizedBox(height:14),
-
-          /// CUSTOMER NAME
-          Text(
-            name,
-            style: const TextStyle(
-                fontSize:17,
-                fontWeight: FontWeight.w600),
-          ),
-
-          const SizedBox(height:14),
-
-          /// DATE ROW
-          Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
 
-              const Icon(
-                Icons.login,
-                size:16,
-                color: Color(0xFF6B7280),
-              ),
+              /// TOP ROW
+              Row(
+                children: [
 
-              const SizedBox(width:6),
-
-              Text(
-                pickup != null
-                    ? "${pickup.day}/${pickup.month}/${pickup.year}"
-                    : "-",
-                style: const TextStyle(fontSize:13),
-              ),
-
-              const SizedBox(width:14),
-
-              const Icon(
-                Icons.arrow_forward,
-                size:16,
-                color: Colors.grey,
-              ),
-
-              const SizedBox(width:14),
-
-              const Icon(
-                Icons.logout,
-                size:16,
-                color: Color(0xFF6B7280),
-              ),
-
-              const SizedBox(width:6),
-
-              Text(
-                ret != null
-                    ? "${ret.day}/${ret.month}/${ret.year}"
-                    : "-",
-                style: const TextStyle(fontSize:13),
-              ),
-
-            ],
-          ),
-
-          const SizedBox(height:16),
-
-          /// PRODUCT TAGS
-          if(products.isNotEmpty)
-
-            Wrap(
-              spacing:8,
-              runSpacing:8,
-              children: products.map((p){
-
-                String code = p["productCode"] ?? "-";
-                int qty = p["quantity"] ?? 1;
-
-                return Container(
-
-                  padding: const EdgeInsets.symmetric(
-                      horizontal:12,
-                      vertical:6),
-
-                  decoration: BoxDecoration(
-
-                    color: const Color(0xFFF8F6F1),
-
-                    borderRadius: BorderRadius.circular(20),
-
-                    border: Border.all(
-                      color: const Color(0xFFE5DFC9),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal:12, vertical:6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF6F3F2),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-
-                  ),
-
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-
-                      const Icon(
-                        Icons.inventory_2_outlined,
-                        size:14,
+                    child: Text(
+                      receipt,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize:13,
                         color: Color(0xFF735C00),
                       ),
+                    ),
+                  ),
 
-                      const SizedBox(width:4),
+                  const Spacer(),
 
-                      Text(
-                        "$code × $qty",
-                        style: const TextStyle(
-                          fontSize:12,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF735C00),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal:10,
+                        vertical:4),
+                    decoration: BoxDecoration(
+                      color: stageColor().withOpacity(.12),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      stage,
+                      style: TextStyle(
+                        fontSize:11,
+                        fontWeight: FontWeight.w600,
+                        color: stageColor(),
+                      ),
+                    ),
+                  )
+
+                ],
+              ),
+
+              const SizedBox(height:14),
+
+              Text(
+                name,
+                style: const TextStyle(
+                    fontSize:17,
+                    fontWeight: FontWeight.w600),
+              ),
+
+              const SizedBox(height:14),
+
+              Row(
+                children: [
+
+                  const Icon(
+                    Icons.login,
+                    size:16,
+                    color: Color(0xFF6B7280),
+                  ),
+
+                  const SizedBox(width:6),
+
+                  Text(
+                    pickup != null
+                        ? "${pickup.day}/${pickup.month}/${pickup.year}"
+                        : "-",
+                    style: const TextStyle(fontSize:13),
+                  ),
+
+                  const SizedBox(width:14),
+
+                  const Icon(
+                    Icons.arrow_forward,
+                    size:16,
+                    color: Colors.grey,
+                  ),
+
+                  const SizedBox(width:14),
+
+                  const Icon(
+                    Icons.logout,
+                    size:16,
+                    color: Color(0xFF6B7280),
+                  ),
+
+                  const SizedBox(width:6),
+
+                  Text(
+                    ret != null
+                        ? "${ret.day}/${ret.month}/${ret.year}"
+                        : "-",
+                    style: const TextStyle(fontSize:13),
+                  ),
+
+                ],
+              ),
+
+              const SizedBox(height:16),
+
+              if(products.isNotEmpty)
+
+                Wrap(
+                  spacing:8,
+                  runSpacing:8,
+                  children: products.map((p){
+
+                    String code = p["productCode"] ?? "-";
+                    int qty = p["quantity"] ?? 1;
+
+                    return Container(
+
+                      padding: const EdgeInsets.symmetric(
+                          horizontal:12,
+                          vertical:6),
+
+                      decoration: BoxDecoration(
+
+                        color: const Color(0xFFF8F6F1),
+
+                        borderRadius: BorderRadius.circular(20),
+
+                        border: Border.all(
+                          color: const Color(0xFFE5DFC9),
                         ),
+
                       ),
 
-                    ],
-                  ),
-                );
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
 
-              }).toList(),
-            )
+                          const Icon(
+                            Icons.inventory_2_outlined,
+                            size:14,
+                            color: Color(0xFF735C00),
+                          ),
 
-        ],
+                          const SizedBox(width:4),
+
+                          Text(
+                            "$code × $qty",
+                            style: const TextStyle(
+                              fontSize:12,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF735C00),
+                            ),
+                          ),
+
+                        ],
+                      ),
+                    );
+
+                  }).toList(),
+                )
+
+            ],
+          ),
+        ),
       ),
     ),
   );
