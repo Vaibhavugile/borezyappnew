@@ -377,107 +377,132 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
 }
 
   /// PRODUCT CARD
-  Widget _productCard(List bookings){
+Widget _productCard(List<Map<String, dynamic>> bookings) {
 
-    return _cardWrapper(
+  return _cardWrapper(
 
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
 
-          const Text(
-            "Products",
-            style: TextStyle(fontSize:18,fontWeight: FontWeight.w600),
-          ),
+        const Text(
+          "Products",
+          style: TextStyle(fontSize:18,fontWeight: FontWeight.w600),
+        ),
 
-          const SizedBox(height:16),
+        const SizedBox(height:16),
 
-          ...bookings.map((doc){
+        ...bookings.map((doc){
 
-            var data = doc.data();
+          var data = doc;
 
-            return Container(
+          var img = data["product"]?["imageUrls"];
+          String? imageUrl = img is List ? img.first : img;
 
-              margin: const EdgeInsets.only(bottom:12),
+          return Container(
 
-              padding: const EdgeInsets.all(12),
+            margin: const EdgeInsets.only(bottom:12),
 
-              decoration: BoxDecoration(
-                color: const Color(0xFFF6F3F2),
-                borderRadius: BorderRadius.circular(14),
-              ),
+            padding: const EdgeInsets.all(12),
 
-              child: Row(
+            decoration: BoxDecoration(
+              color: const Color(0xFFF6F3F2),
+              borderRadius: BorderRadius.circular(14),
+            ),
 
-                children: [
+            child: Row(
 
-                  Container(
+              children: [
+
+                GestureDetector(
+
+                  onTap: (){
+                    if(imageUrl != null && imageUrl.isNotEmpty){
+                      _showImagePreview(context,imageUrl);
+                    }
+                  },
+
+                  child: Container(
                     width:46,
                     height:46,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.checkroom),
-                  ),
 
-                  const SizedBox(width:12),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
 
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-
-                        Text(
-                          data["productName"] ?? "-",
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-
-                        const SizedBox(height:4),
-
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal:8,vertical:4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFD4AF37).withOpacity(.1),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            data["productCode"] ?? "",
-                            style: const TextStyle(
-                              fontSize:11,
-                              color: Color(0xFF735C00),
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
+                      child: imageUrl != null && imageUrl.isNotEmpty
+                          ? Image.network(
+                              imageUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_,__,___){
+                                return const Icon(Icons.checkroom);
+                              },
+                            )
+                          : const Icon(Icons.checkroom),
                     ),
                   ),
+                ),
 
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                const SizedBox(width:12),
+
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
 
-                      Text("Qty ${data["quantity"]}"),
-
                       Text(
-                        "₹${data["price"]}",
+                        data["productName"] ?? "-",
                         style: const TextStyle(fontWeight: FontWeight.w600),
-                      )
+                      ),
 
+                      const SizedBox(height:4),
+
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal:8,vertical:4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFD4AF37).withOpacity(.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          data["productCode"] ?? "",
+                          style: const TextStyle(
+                            fontSize:11,
+                            color: Color(0xFF735C00),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
                     ],
-                  )
-                ],
-              ),
-            );
+                  ),
+                ),
 
-          }).toList()
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
 
-        ],
-      ),
-    );
-  }
+                    Text("Qty ${data["quantity"]}"),
+
+                    Text(
+                      "₹${data["price"] ?? 0}",
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    )
+
+                  ],
+                )
+              ],
+            ),
+          );
+
+        }).toList()
+
+      ],
+    ),
+  );
+}
 
   /// PAYMENT SUMMARY
   Widget _paymentCard(Map? payment){
@@ -883,7 +908,45 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
     },
   );
 }
+void _showImagePreview(BuildContext context,String imageUrl){
 
+  showDialog(
+    context: context,
+    builder: (_) {
+
+      return Dialog(
+        backgroundColor: Colors.transparent,
+
+        child: Stack(
+          children: [
+
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Image.network(imageUrl),
+            ),
+
+            Positioned(
+              right:8,
+              top:8,
+              child: GestureDetector(
+                onTap: (){
+                  Navigator.pop(context);
+                },
+                child: const CircleAvatar(
+                  radius:16,
+                  backgroundColor: Colors.black54,
+                  child: Icon(Icons.close,color: Colors.white,size:18),
+                ),
+              ),
+            )
+
+          ],
+        ),
+      );
+
+    },
+  );
+}
 Future<void> sendWhatsAppMessage(String phone, String message) async {
 
   try {

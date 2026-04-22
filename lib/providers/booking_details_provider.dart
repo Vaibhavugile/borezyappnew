@@ -14,8 +14,7 @@ class BookingDetailsProvider extends ChangeNotifier {
   bool loading = true;
 
   /// PRODUCT BOOKINGS
-  List<QueryDocumentSnapshot> bookings = [];
-
+List<Map<String, dynamic>> bookings = [];
   /// PAYMENT DOC
   Map<String, dynamic>? paymentDoc;
 
@@ -49,40 +48,66 @@ class BookingDetailsProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      /// FETCH ALL PRODUCTS
+var productsSnap = await FirebaseFirestore.instance
+    .collection("products")
+    .doc(branchCode)
+    .collection("products")
+    .get();
+
+Map<String, dynamic> productsMap = {};
+
+for (var doc in productsSnap.docs) {
+  productsMap[doc.id] = doc.data();
+}
 
       /// FETCH BOOKINGS
-      var bookingSnap = await FirebaseFirestore.instance
-          .collectionGroup("bookings")
-          .where("receiptNumber", isEqualTo: receiptNumber)
-          .get();
+     var bookingSnap = await FirebaseFirestore.instance
+    .collectionGroup("bookings")
+    .where("receiptNumber", isEqualTo: receiptNumber)
+    .get();
 
-      bookings = bookingSnap.docs;
+List<Map<String, dynamic>> bookingList = [];
+if (bookingSnap.docs.isNotEmpty) {
 
-      productCodes = [];
-      totalProducts = 0;
+  Map<String, dynamic> first =
+      bookingSnap.docs.first.data() as Map<String, dynamic>;
 
-      if (bookingSnap.docs.isNotEmpty) {
+  customerDetails = first["userDetails"] ?? {};
+}
+productCodes = [];
+totalProducts = 0;
 
-        Map<String, dynamic> first =
-            bookingSnap.docs.first.data() as Map<String, dynamic>;
+for (var doc in bookingSnap.docs) {
 
-        customerDetails = first["userDetails"] ?? {};
+  Map<String, dynamic> data =
+      doc.data() as Map<String, dynamic>;
 
-        for (var doc in bookingSnap.docs) {
+  /// GET PRODUCT ID
+  String productId = doc.reference.parent.parent!.id;
 
-          Map<String, dynamic> data =
-              doc.data() as Map<String, dynamic>;
+  /// GET PRODUCT DATA
+  Map<String, dynamic>? productData = productsMap[productId];
 
-          String code = data["productCode"] ?? "";
-          int qty = (data["quantity"] ?? 1).toInt();
+  bookingList.add({
+    ...data,
+    "product": productData,
+    "docRef": doc.reference
+  });
 
-          if (code.isNotEmpty) {
-            productCodes.add(code);
-          }
+  String code = data["productCode"] ?? "";
+  int qty = (data["quantity"] ?? 1).toInt();
 
-          totalProducts += qty;
-        }
-      }
+  if (code.isNotEmpty) {
+    productCodes.add(code);
+  }
+
+  totalProducts += qty;
+}
+
+bookings = bookingList;
+
+     
 
       /// FETCH PAYMENT DOC
       var paymentSnap = await FirebaseFirestore.instance
@@ -223,14 +248,12 @@ class BookingDetailsProvider extends ChangeNotifier {
       /// UPDATE BOOKINGS
       for (var booking in bookings) {
 
-        Map<String, dynamic> data =
-            booking.data() as Map<String, dynamic>;
-
+        Map<String, dynamic> data = booking;
         if (data.containsKey("archived") && data["archived"] == true) {
           continue;
         }
 
-        var bookingRef = booking.reference;
+        var bookingRef = booking["docRef"];
 
         batch.update(bookingRef, {
           ...updates,
@@ -271,8 +294,7 @@ class BookingDetailsProvider extends ChangeNotifier {
 
   if (bookings.isEmpty) return "";
 
-  Map<String, dynamic> booking =
-      bookings.first.data() as Map<String, dynamic>;
+  Map<String, dynamic> booking = bookings.first;
 
   var user = customerDetails ?? {};
   var payment = paymentDoc ?? {};
@@ -284,10 +306,9 @@ class BookingDetailsProvider extends ChangeNotifier {
   Timestamp? returnDate = booking["returnDate"];
 
   /// PRODUCTS
-  List<Map<String, dynamic>> productsList = bookings.map((doc) {
+List<Map<String, dynamic>> productsList = bookings.map((doc) {
 
-    Map<String, dynamic> data =
-        doc.data() as Map<String, dynamic>;
+  Map<String, dynamic> data = doc;
 
     return {
       "productCode": data["productCode"] ?? "",
