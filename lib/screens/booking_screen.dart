@@ -964,46 +964,95 @@ Widget buildCustomerStep() {
 
         const SizedBox(height:16),
 
-        buildPremiumCard(
-          title: "Contact Information",
-          icon: Icons.phone_outlined,
-          child: Column(
-            children: [
+          buildPremiumCard(
+      title: "Contact Information",
+      icon: Icons.phone_outlined,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
 
-              TextField(
-                keyboardType: TextInputType.phone,
-                decoration: InputDecoration(
-                  labelText: "Mobile Number",
-                  filled: true,
-                  fillColor: Colors.grey.shade100,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-                onChanged:(v)=>handleInputChange("contact",v),
+          /// MOBILE NUMBER
+          TextField(
+            keyboardType: TextInputType.phone,
+            maxLength: 10,
+            decoration: InputDecoration(
+              labelText: "Mobile Number",
+              filled: true,
+              fillColor: Colors.grey.shade100,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
               ),
+            ),
+            onChanged: (value) {
+              handleInputChange("contact", value);
 
-              const SizedBox(height:14),
-
-              TextField(
-                decoration: InputDecoration(
-                  labelText: "Alternative Phone",
-                  hintText: "Optional",
-                  filled: true,
-                  fillColor: Colors.grey.shade100,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-                onChanged:(v)=>handleInputChange("alternativecontactno",v),
-              ),
-
-            ],
+              if (value.length == 10) {
+                fetchCreditNote(value);
+              }
+            },
           ),
-        ),
 
+          /// CREDIT BADGE
+          if (availableCredit > 0)
+            Container(
+              margin: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 8,
+              ),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8F5E9),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: Colors.green.withOpacity(.3),
+                ),
+              ),
+              child: Row(
+                children: [
+
+                  const Icon(
+                    Icons.account_balance_wallet_outlined,
+                    color: Colors.green,
+                    size: 18,
+                  ),
+
+                  const SizedBox(width: 8),
+
+                  Expanded(
+                    child: Text(
+                      "Store Credit Available ₹$availableCredit",
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.green,
+                      ),
+                    ),
+                  ),
+
+                ],
+              ),
+            ),
+
+          const SizedBox(height:14),
+
+          /// ALTERNATIVE PHONE
+          TextField(
+            decoration: InputDecoration(
+              labelText: "Alternative Phone",
+              hintText: "Optional",
+              filled: true,
+              fillColor: Colors.grey.shade100,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
+            ),
+            onChanged:(v)=>handleInputChange("alternativecontactno",v),
+          ),
+
+        ],
+      ),
+    ),
         const SizedBox(height:16),
 
         buildPremiumCard(
@@ -2595,36 +2644,80 @@ void handleApplyCredit(){
 }
 Future<void> fetchCreditNote(String contactNumber) async {
 
-  try{
+try {
 
-    String branchCode = getBranchCode(); // later from provider
 
-    var creditRef = FirebaseFirestore.instance
-        .collection("products")
-        .doc(branchCode)
-        .collection("creditNotes");
+/// Clean input
+contactNumber = contactNumber.trim();
 
-    var query = await creditRef
-        .where("mobileNumber", isEqualTo: contactNumber)
-        .where("status", isEqualTo: "active")
-        .get();
+print("📞 Searching credit for mobile: $contactNumber");
 
-    if(query.docs.isNotEmpty){
+String branchCode = getBranchCode();
+print("🏢 Branch Code: $branchCode");
 
-      var creditData = query.docs.first.data();
+var creditRef = FirebaseFirestore.instance
+    .collection("products")
+    .doc(branchCode)
+    .collection("creditNotes");
 
-      setState(() {
-        availableCredit = creditData["Balance"] ?? 0;
-        creditNoteId = query.docs.first.id;
-      });
+print("📂 Querying Firestore creditNotes...");
 
-    }
+var query = await creditRef
+    .where("mobileNumber", isEqualTo: contactNumber)
+    .where("status", isEqualTo: "active")
+    .get();
 
-  }catch(e){
-    print("Credit note error $e");
+print("📊 Documents Found: ${query.docs.length}");
+
+if (query.docs.isNotEmpty) {
+
+  var creditData = query.docs.first.data();
+  print("💰 Credit Document Data: $creditData");
+
+  double balance = 0;
+
+  /// Handle int / double safely
+  if (creditData["Balance"] != null) {
+    balance = double.tryParse(
+      creditData["Balance"].toString(),
+    ) ?? 0;
   }
 
+  setState(() {
+    availableCredit = balance;
+    creditNoteId = query.docs.first.id;
+  });
+
+  print("✅ Credit Applied: ₹$availableCredit");
+
+} else {
+
+  print("❌ No credit note found for this mobile");
+
+  setState(() {
+    availableCredit = 0;
+    creditNoteId = null;
+  });
+
 }
+
+
+} catch (e, stackTrace) {
+
+
+print("🔥 Credit note error: $e");
+print(stackTrace);
+
+setState(() {
+  availableCredit = 0;
+  creditNoteId = null;
+});
+
+
+}
+
+}
+
 Future<void> fetchSubUsers() async {
 
   try {
@@ -2717,11 +2810,20 @@ Future<void> handleBookingConfirmation() async {
       Map<String, dynamic> productData =
           productDoc.data() as Map<String, dynamic>;
 
-      int price = productData["price"] ?? 0;
-      int deposit = productData["deposit"] ?? 0;
-      String priceType = productData["priceType"] ?? "daily";
-      int minimumRentalPeriod = productData["minimumRentalPeriod"] ?? 1;
-      int extraRent = productData["extraRent"] ?? 0;
+     int price =
+    int.tryParse(productData["price"].toString()) ?? 0;
+
+int deposit =
+    int.tryParse(productData["deposit"].toString()) ?? 0;
+
+String priceType =
+    productData["priceType"]?.toString() ?? "daily";
+
+int minimumRentalPeriod =
+    int.tryParse(productData["minimumRentalPeriod"].toString()) ?? 1;
+
+int extraRent =
+    int.tryParse(productData["extraRent"].toString()) ?? 0;
       String productName = productData["productName"] ?? "";
 
       int quantity = int.tryParse(product["quantity"].toString()) ?? 0;
