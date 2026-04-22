@@ -186,98 +186,181 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF0FDF4), // light green background
-      body: Center(
-        child: SingleChildScrollView(
-          child: Animate(
-            effects: [FadeEffect(duration: 600.ms), MoveEffect(begin: Offset(0, 30))],
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Card(
-                elevation: 12,
-                color: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        "Welcome to Borezy",
-                        style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Color(0xFF065F46)),
-                      ),
-                      SizedBox(height: 20),
-                      TextField(
-                        controller: _emailController,
-                        decoration: InputDecoration(
-                          labelText: "Email",
-                          prefixIcon: Icon(Icons.email_outlined, color: Colors.green),
-                          filled: true,
-                          fillColor: Color(0xFFF0FDF4),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                      ),
-                      SizedBox(height: 16),
-                      TextField(
-                        controller: _passwordController,
-                        obscureText: true,
-                        decoration: InputDecoration(
-                          labelText: "Password",
-                          prefixIcon: Icon(Icons.lock_outline, color: Colors.green),
-                          filled: true,
-                          fillColor: Color(0xFFF0FDF4),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                      ),
-                      SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Checkbox(
-                            value: _rememberMe,
-                            onChanged: (val) => setState(() => _rememberMe = val ?? false),
-                            activeColor: Colors.green,
-                          ),
-                          Text("Remember Me", style: TextStyle(color: Color(0xFF065F46))),
-                        ],
-                      ),
-                      if (_error != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 10),
-                          child: Text(_error!,
-                              style: TextStyle(color: Colors.red, fontWeight: FontWeight.w500)),
-                        ),
-                      SizedBox(height: 20),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          icon: _loading
-                              ? SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                          )
-                              : Icon(Icons.login),
-                          label: Text("Login"),
-                          onPressed: _loading ? null : _handleLogin,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Color(0xFF10B981), // emerald green
-                            foregroundColor: Colors.white,
-                            padding: EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                        ),
-                      ),
-                    ],
+ @override
+Widget build(BuildContext context) {
+return Scaffold(
+backgroundColor: const Color(0xFFFBF9F8),
+
+
+body: Center(
+  child: SingleChildScrollView(
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+
+      child: Card(
+        elevation: 10,
+        color: const Color(0xFFF6F3F2),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
+
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            vertical: 40,
+            horizontal: 24,
+          ),
+
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+
+              /// LOGO
+              Container(
+                height: 70,
+                width: 70,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD4AF37).withOpacity(.15),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: const Icon(
+                  Icons.storefront_outlined,
+                  size: 36,
+                  color: Color(0xFF735C00),
+                ),
+              ),
+
+              const SizedBox(height: 18),
+
+              /// TITLE
+              const Text(
+                "Welcome to Borezy",
+                style: TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF735C00),
+                ),
+              ),
+
+              const SizedBox(height: 6),
+
+              const Text(
+                "Login to continue",
+                style: TextStyle(
+                  color: Colors.black54,
+                  fontSize: 14,
+                ),
+              ),
+
+              const SizedBox(height: 28),
+
+              /// EMAIL
+              TextField(
+                controller: _emailController,
+                decoration: InputDecoration(
+                  hintText: "Email Address",
+                  prefixIcon: const Icon(Icons.email_outlined),
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
                   ),
                 ),
               ),
-            ),
+
+              const SizedBox(height: 16),
+
+              /// PASSWORD
+              TextField(
+                controller: _passwordController,
+                obscureText: true,
+                decoration: InputDecoration(
+                  hintText: "Password",
+                  prefixIcon: const Icon(Icons.lock_outline),
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              /// REMEMBER ME
+              Row(
+                children: [
+                  Checkbox(
+                    value: _rememberMe,
+                    activeColor: const Color(0xFFD4AF37),
+                    onChanged: (val) {
+                      setState(() {
+                        _rememberMe = val ?? false;
+                      });
+                    },
+                  ),
+                  const Text("Remember Me"),
+                ],
+              ),
+
+              /// ERROR
+              if (_error != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    _error!,
+                    style: const TextStyle(
+                      color: Colors.red,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+
+              const SizedBox(height: 22),
+
+              /// LOGIN BUTTON
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _loading ? null : _handleLogin,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1B1C1C),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                  ),
+                  child: _loading
+                      ? const SizedBox(
+                          height: 22,
+                          width: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          "LOGIN",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                ),
+              ),
+
+            ],
           ),
         ),
       ),
-    );
-  }
+    ),
+  ),
+),
+
+
+);
+}
+
+
 }

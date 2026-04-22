@@ -129,7 +129,7 @@ child: Scaffold(
     backgroundColor: const Color(0xFFFBF9F8),
     elevation: 0,
     title: const Text(
-      "Digital Atelier",
+      "Borezy",
       style: TextStyle(
         color: Color(0xFF735C00),
         fontWeight: FontWeight.w600,
