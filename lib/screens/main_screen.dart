@@ -22,58 +22,77 @@ class _MainScreenState extends State<MainScreen> {
   ];
 
   @override
-  Widget build(BuildContext context) {
+Widget build(BuildContext context) {
 
-    return Scaffold(
+return WillPopScope(
+onWillPop: () async {
 
-      body: pages[currentIndex],
 
-      bottomNavigationBar: BottomNavigationBar(
+  if (currentIndex != 0) {
 
-        currentIndex: currentIndex,
+    setState(() {
+      currentIndex = 0;
+    });
 
-        type: BottomNavigationBarType.fixed,
+    return false;
 
-        selectedItemColor: const Color(0xFFD4AF37),
-
-        unselectedItemColor: Colors.grey,
-
-        onTap: (index){
-          setState(() {
-            currentIndex = index;
-          });
-        },
-
-        items: const [
-
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard_outlined),
-            label: "Home",
-          ),
-
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_month_outlined),
-            label: "Book Now",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people_outline),
-            label: "Customers",
-          ),
-
-          BottomNavigationBarItem(
-            icon: Icon(Icons.checkroom_outlined),
-            label: "Products",
-          ),
-
-          
-
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart_outlined),
-            label: "Reports",
-          ),
-
-        ],
-      ),
-    );
   }
+
+  return true;
+},
+child: Scaffold(
+
+  body: pages[currentIndex],
+
+  bottomNavigationBar: BottomNavigationBar(
+
+    currentIndex: currentIndex,
+
+    type: BottomNavigationBarType.fixed,
+
+    selectedItemColor: const Color(0xFFD4AF37),
+
+    unselectedItemColor: Colors.grey,
+
+    onTap: (index){
+      setState(() {
+        currentIndex = index;
+      });
+    },
+
+    items: const [
+
+      BottomNavigationBarItem(
+        icon: Icon(Icons.dashboard_outlined),
+        label: "Home",
+      ),
+
+      BottomNavigationBarItem(
+        icon: Icon(Icons.calendar_month_outlined),
+        label: "Book Now",
+      ),
+
+      BottomNavigationBarItem(
+        icon: Icon(Icons.people_outline),
+        label: "Customers",
+      ),
+
+      BottomNavigationBarItem(
+        icon: Icon(Icons.checkroom_outlined),
+        label: "Products",
+      ),
+
+      BottomNavigationBarItem(
+        icon: Icon(Icons.bar_chart_outlined),
+        label: "Reports",
+      ),
+
+    ],
+  ),
+),
+
+
+);
+}
+
 }

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:provider/provider.dart';
+import '../providers/user_provider.dart';
+import 'main_screen.dart';
 class Booking extends StatefulWidget {
   const Booking({super.key});
 
@@ -19,6 +22,9 @@ DateTime getFixedPickupTime(DateTime date) {
     0,
     0,
   );
+}
+String getBranchCode() {
+  return Provider.of<UserProvider>(context, listen: false).branchCode ?? "";
 }
 
 DateTime getFixedReturnTime(DateTime date) {
@@ -104,26 +110,41 @@ void initState() {
 
   @override
   Widget build(BuildContext context) {
+return WillPopScope(
+onWillPop: () async {
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFFBF9F8),
 
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFFBF9F8),
-        elevation: 0,
-        title: const Text(
-          "Digital Atelier",
-          style: TextStyle(
-            color: Color(0xFF735C00),
-            fontWeight: FontWeight.w600,
-            fontSize: 22,
-          ),
-        ),
+  Navigator.pushAndRemoveUntil(
+    context,
+    MaterialPageRoute(builder: (_) => const MainScreen()),
+    (route) => false,
+  );
+
+  return false;
+},
+child: Scaffold(
+  backgroundColor: const Color(0xFFFBF9F8),
+
+  appBar: AppBar(
+    backgroundColor: const Color(0xFFFBF9F8),
+    elevation: 0,
+    title: const Text(
+      "Digital Atelier",
+      style: TextStyle(
+        color: Color(0xFF735C00),
+        fontWeight: FontWeight.w600,
+        fontSize: 22,
       ),
+    ),
+  ),
 
-      body: buildStep(),
-    );
-  }
+  body: buildStep(),
+),
+
+
+);
+}
+
 
   Widget buildStep(){
 
@@ -2173,7 +2194,7 @@ Future<void> fetchProductSuggestions(String searchTerm) async {
 
   try {
 
-    String branchCode = "7007"; // later from user provider
+   String branchCode = getBranchCode(); // later from user provider
 
     var productsRef = FirebaseFirestore.instance
         .collection("products")
@@ -2240,7 +2261,7 @@ Future<void> fetchProductDetails(String productCode, int index) async {
 
   try {
 
-    String branchCode = "7007"; // later replace with provider
+    String branchCode = getBranchCode(); // later replace with provider
 
     /// Firestore reference
     var productRef = FirebaseFirestore.instance
@@ -2324,7 +2345,7 @@ if (quantity <= 0) {
   });
   return;
 }
-    String branchCode = "7007";
+    String branchCode = getBranchCode();
 
     /// Fetch product
     var productRef = FirebaseFirestore.instance
@@ -2576,7 +2597,7 @@ Future<void> fetchCreditNote(String contactNumber) async {
 
   try{
 
-    String branchCode = "7007"; // later from provider
+    String branchCode = getBranchCode(); // later from provider
 
     var creditRef = FirebaseFirestore.instance
         .collection("products")
@@ -2608,7 +2629,7 @@ Future<void> fetchSubUsers() async {
 
   try {
 
-    String branchCode = "7007"; // later from auth
+    String branchCode = getBranchCode(); // later from auth
 
     var ref = FirebaseFirestore.instance
         .collection("products")
@@ -2672,7 +2693,7 @@ Future<void> handleBookingConfirmation() async {
           .ceil();
 
       /// 🔥 BRANCH CODE (same as web)
-    String branchCode = "7007"; // later replace with userData.branchCode
+    String branchCode = getBranchCode();// later replace with userData.branchCode
 
       var productRef = FirebaseFirestore.instance
           .collection("products")
@@ -2825,7 +2846,7 @@ Future<int?> getNextBookingId(DateTime pickupDateObj, String productCode) async 
     }
 
     // Fetch branchCode (same as web)
-    String branchCode = "7007"; // later replace with userData.branchCode
+    String branchCode = getBranchCode(); // later replace with userData.branchCode
 
     // Firestore reference
     var productRef = FirebaseFirestore.instance
@@ -2919,7 +2940,7 @@ Future<void> handleConfirmPayment() async {
 
   try {
 
-    String branchCode = "7007";
+    String branchCode = getBranchCode();
 
     /// GENERATE RECEIPT NUMBER
     String receiptNumber = await generateReceiptNumber(branchCode);

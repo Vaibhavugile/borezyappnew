@@ -3,7 +3,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DashboardProvider extends ChangeNotifier {
 
-  String branchCode = "7007";
+  
+  late String branchCode;
+
+  DashboardProvider(this.branchCode);
 
   bool loading = true;
 
@@ -31,7 +34,7 @@ class DashboardProvider extends ChangeNotifier {
   double depositPendingToday = 0;
 
   Future<void> fetchData() async {
-
+  if(branchCode.isEmpty) return;
     loading = true;
     notifyListeners();
 

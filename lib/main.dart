@@ -37,14 +37,26 @@ class MyApp extends StatelessWidget {
         ),
 
         /// DASHBOARD + BOOKINGS SHARED DATA
-        ChangeNotifierProvider(
-          create: (_) => DashboardProvider()..fetchData(),
-        ),
+       ChangeNotifierProxyProvider<UserProvider, DashboardProvider>(
+  create: (_) => DashboardProvider(""),
+  update: (_, userProvider, dashboardProvider) {
+
+    final branchCode = userProvider.branchCode ?? "";
+
+    dashboardProvider!.branchCode = branchCode;
+
+    if(branchCode.isNotEmpty){
+      dashboardProvider.fetchData();
+    }
+
+    return dashboardProvider;
+  },
+),
 
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        title: 'Digital Atelier',
+        title: 'Borezy',
 
         /// GLOBAL THEME
         theme: ThemeData(
@@ -132,7 +144,7 @@ class MyApp extends StatelessWidget {
         ),
 
         /// START SCREEN
-        home: const MainScreen(),
+        home: LoginScreen(),
       ),
     );
   }

@@ -11,6 +11,7 @@ import 'admin_screen.dart';
 import 'branch_dashboard.dart';
 import 'subuser_dashboard.dart';
 import '../providers/user_provider.dart';
+import 'main_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -57,9 +58,9 @@ class _LoginScreenState extends State<LoginScreen> {
         if (role == 'admin') {
           Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => AdminScreen()));
         } else if (role == 'subuser') {
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => BranchDashboardScreen()));
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MainScreen()));
         } else {
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => BranchDashboardScreen()));
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MainScreen()));
         }
       } else {
         setState(() => _error = 'Offline: Invalid credentials or no cached user data.');
@@ -109,7 +110,7 @@ class _LoginScreenState extends State<LoginScreen> {
         data['role'] = 'branch';
         Provider.of<UserProvider>(context, listen: false).setUserData(data);
         hiveBox.put(email, data);
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => BranchDashboardScreen()));
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MainScreen()));
         return;
       }
 
@@ -155,8 +156,8 @@ class _LoginScreenState extends State<LoginScreen> {
         data['role'] = 'subuser';  // Normalize role casing
         Provider.of<UserProvider>(context, listen: false).setUserData(data);
         hiveBox.put(email, data);
-        print('Navigating to BranchDashboardScreen');
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => BranchDashboardScreen()));
+        print('Navigating to MainScreen');
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MainScreen()));
         return;
       }
 
