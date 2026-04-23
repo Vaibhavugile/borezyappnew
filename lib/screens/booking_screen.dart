@@ -106,7 +106,8 @@ DateTime getFixedReturnTime(DateTime date) {
   "firstpaymentdtails": "",
   "secondpaymentmode": "",
   "secondpaymentdetails": "",
-  "specialnote": ""
+  "specialnote": "",
+  "creditNoteAmountAppliedToRent": "",
 };
 Map receipt = {};
   List productSuggestions = [];
@@ -2760,41 +2761,35 @@ void calculateGrandTotals() {
 
   calculateTotals();
 }
-void handleApplyCredit(){
-  if(appliedCredit > 0) return;
+void handleApplyCredit() {
 
-  double finalRent =
-      double.tryParse(userDetails["finalrent"].toString()) ?? 0;
+  if (appliedCredit > 0) return;
 
-  if(availableCredit > 0 && finalRent > 0){
+  double rent =
+      double.tryParse(userDetails["grandTotalRent"].toString()) ?? 0;
+
+  double discountRent =
+      double.tryParse(userDetails["discountOnRent"].toString()) ?? 0;
+
+  double currentRent = rent - discountRent;
+
+  if (availableCredit > 0 && currentRent > 0) {
 
     double creditToApply =
-        availableCredit > finalRent ? finalRent : availableCredit;
-
-    double updatedRent = finalRent - creditToApply;
-
-    double deposit =
-        double.tryParse(userDetails["finaldeposite"].toString()) ?? 0;
-
-    double totalAmount = updatedRent + deposit;
-
-    double paid =
-        double.tryParse(userDetails["amountpaid"].toString()) ?? 0;
-
-    double balance = totalAmount - paid;
+        availableCredit > currentRent ? currentRent : availableCredit;
 
     setState(() {
 
       appliedCredit = creditToApply;
 
-      userDetails["finalrent"] = updatedRent;
-      userDetails["totalamounttobepaid"] = totalAmount;
-      userDetails["balance"] = balance;
+      /// ⭐ SAVE CREDIT IN USER DETAILS
+      userDetails["creditNoteAmountAppliedToRent"] = creditToApply;
 
     });
 
-  }
+    calculateTotals();
 
+  }
 }
 Future<void> fetchCreditNote(String contactNumber) async {
 
@@ -3190,6 +3185,8 @@ void handleDeleteProduct(String productCode){
 }
 Future<void> handleConfirmPayment() async {
 
+  calculateTotals();
+
   setState(() {
     isButtonDisabled = true;
   });
@@ -3241,19 +3238,18 @@ Future<void> handleConfirmPayment() async {
           .doc(product["productCode"]);
 
       var productDoc = await productRef.get();
-
       if (!productDoc.exists) continue;
 
       var productData = productDoc.data();
 
-int price =
-    int.tryParse((productData?["price"] ?? "0").toString()) ?? 0;
+      int price =
+          int.tryParse((productData?["price"] ?? "0").toString()) ?? 0;
 
-int deposit =
-    int.tryParse((productData?["deposit"] ?? "0").toString()) ?? 0;
+      int deposit =
+          int.tryParse((productData?["deposit"] ?? "0").toString()) ?? 0;
 
-int quantity =
-    int.tryParse(product["quantity"].toString()) ?? 0;
+      int quantity =
+          int.tryParse(product["quantity"].toString()) ?? 0;
 
       int bookingId =
           await getNextBookingId(pickupDateObj, product["productCode"]) ?? 1;
@@ -3283,33 +3279,34 @@ int quantity =
       });
     }
 
-    /// PAYMENT CALCULATION (same as web)
+    /// PAYMENT CALCULATION (FIXED TYPES)
 
-    int amountPaid =
-        int.tryParse(userDetails["amountpaid"].toString()) ?? 0;
+    double amountPaid =
+        double.tryParse(userDetails["amountpaid"].toString()) ?? 0;
 
-    int finalRent =
-        int.tryParse(userDetails["finalrent"].toString()) ?? 0;
+    double finalRent =
+        double.tryParse(userDetails["finalrent"].toString()) ?? 0;
 
-    int finalDeposit =
-        int.tryParse(userDetails["finaldeposite"].toString()) ?? 0;
+    double finalDeposit =
+        double.tryParse(userDetails["finaldeposite"].toString()) ?? 0;
 
-    int rentCollected = amountPaid >= finalRent ? finalRent : amountPaid;
+    double rentCollected =
+        amountPaid >= finalRent ? finalRent : amountPaid;
 
-    int rentPending = finalRent - rentCollected;
+    double rentPending = finalRent - rentCollected;
 
-    int remainingAfterRent = amountPaid - rentCollected;
+    double remainingAfterRent = amountPaid - rentCollected;
 
-    int depositCollected =
+    double depositCollected =
         remainingAfterRent > 0
             ? remainingAfterRent.clamp(0, finalDeposit)
             : 0;
 
-    int depositPending = finalDeposit - depositCollected;
+    double depositPending = finalDeposit - depositCollected;
 
-    int depositReturned = 0;
+    double depositReturned = 0;
 
-    int depositWithYou = depositCollected;
+    double depositWithYou = depositCollected;
 
     /// OVERALL DATES
 
@@ -3329,7 +3326,7 @@ int quantity =
         .collection("payments")
         .doc(receiptNumber);
 
-          List reviewProducts = receipt["products"] ?? [];
+    List reviewProducts = receipt["products"] ?? [];
 
     await paymentRef.set({
 
@@ -3391,23 +3388,22 @@ int quantity =
       "depositReturned": depositReturned,
       "depositWithYou": depositWithYou,
 
+      "productsSummary": reviewProducts.map((p) => {
 
-"productsSummary": reviewProducts.map((p) => {
+        "productCode": p["productCode"],
+        "productName": p["productName"] ?? "",
+        "quantity": int.tryParse(p["quantity"].toString()) ?? 0,
 
-  "productCode": p["productCode"],
-  "productName": p["productName"] ?? "",
-  "quantity": int.tryParse(p["quantity"].toString()) ?? 0,
+        "rent": int.tryParse(p["price"].toString()) ?? 0,
+        "deposit": int.tryParse(p["deposit"].toString()) ?? 0,
 
-  "rent": int.tryParse(p["price"].toString()) ?? 0,
-  "deposit": int.tryParse(p["deposit"].toString()) ?? 0,
-
-}).toList(),
+      }).toList(),
 
       "createdAt": FieldValue.serverTimestamp()
 
     });
 
-    /// CREATE TRANSACTION (tx1 like web)
+    /// TRANSACTION
 
     if (amountPaid > 0) {
 
@@ -3428,46 +3424,6 @@ int quantity =
 
       });
 
-    }
-
-    /// LEDGER ENTRIES
-
-    var ledgerRef = FirebaseFirestore.instance
-        .collection("products")
-        .doc(branchCode)
-        .collection("ledger");
-
-    int rentPay = rentCollected;
-    int depositPay = depositCollected;
-
-    if (rentPay > 0) {
-
-      await ledgerRef.add({
-
-        "receiptNumber": receiptNumber,
-        "customerName": userDetails["name"] ?? "",
-        "type": "rentPayment",
-        "amount": rentPay,
-        "mode": userDetails["firstpaymentmode"] ?? "",
-        "details": userDetails["firstpaymentdtails"] ?? "",
-        "createdAt": FieldValue.serverTimestamp()
-
-      });
-    }
-
-    if (depositPay > 0) {
-
-      await ledgerRef.add({
-
-        "receiptNumber": receiptNumber,
-        "customerName": userDetails["name"] ?? "",
-        "type": "depositPayment",
-        "amount": depositPay,
-        "mode": userDetails["firstpaymentmode"] ?? "",
-        "details": userDetails["firstpaymentdtails"] ?? "",
-        "createdAt": FieldValue.serverTimestamp()
-
-      });
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
