@@ -1214,47 +1214,7 @@ Widget buildCustomerStep() {
 
         const SizedBox(height:16),
 
-        if(availableCredit > 0)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              gradient: const LinearGradient(
-                colors: [
-                  Color(0xFFD4AF37),
-                  Color(0xFFB8962E),
-                ],
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-
-                const Text(
-                  "STORE CREDIT AVAILABLE",
-                  style: TextStyle(
-                    fontSize:12,
-                    color:Colors.white70,
-                  ),
-                ),
-
-                const SizedBox(height:6),
-
-                Text(
-                  "₹$availableCredit",
-                  style: const TextStyle(
-                    fontSize:28,
-                    fontWeight:FontWeight.bold,
-                    color:Colors.white,
-                  ),
-                ),
-
-              ],
-            ),
-          ),
-
-        const SizedBox(height:16),
+        
 
         buildPremiumCard(
           title: "Lead & Assignment",
@@ -3403,6 +3363,34 @@ Future<void> handleConfirmPayment() async {
 
     });
 
+/// UPDATE CREDIT NOTE BALANCE
+if (appliedCredit > 0 && creditNoteId != null) {
+
+  var creditRef = FirebaseFirestore.instance
+      .collection("products")
+      .doc(branchCode)
+      .collection("creditNotes")
+      .doc(creditNoteId);
+
+  var creditDoc = await creditRef.get();
+
+  if (creditDoc.exists) {
+
+    double currentBalance =
+        double.tryParse(creditDoc["Balance"].toString()) ?? 0;
+
+    double remainingCredit = currentBalance - appliedCredit;
+
+    if (remainingCredit < 0) {
+      remainingCredit = 0;
+    }
+
+    await creditRef.update({
+      "Balance": remainingCredit
+    });
+
+  }
+}
     /// TRANSACTION
 
     if (amountPaid > 0) {
@@ -3487,13 +3475,6 @@ void calculatePaymentSummary() {
   userDetails["totalamounttobepaid"] = totalAmount.toInt();
   userDetails["balance"] = balance.toInt();
 
-  if (amountPaid == 0) {
-    userDetails["paymentstatus"] = "pending";
-  } else if (amountPaid < totalAmount) {
-    userDetails["paymentstatus"] = "partialpayment";
-  } else {
-    userDetails["paymentstatus"] = "paid";
-  }
 
   setState(() {});
 }
