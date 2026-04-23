@@ -571,6 +571,8 @@ if (img is List && img.isNotEmpty) {
         /// RENT
         _infoRow("Grand Total Rent", "₹${payment["grandTotalRent"] ?? 0}"),
         _infoRow("Discount on Rent", "₹${payment["discountOnRent"] ?? 0}"),
+        _infoRow("Applied Credit", "₹${payment["appliedCredit"] ?? 0}"),
+
         _infoRow("Final Rent", "₹${payment["finalRent"] ?? 0}"),
 
         const Divider(),
@@ -584,7 +586,6 @@ if (img is List && img.isNotEmpty) {
 
         /// TOTAL
         _infoRow("Amount To Be Paid", "₹${payment["totalAmount"] ?? 0}"),
-        _infoRow("Applied Credit", "₹${payment["appliedCredit"] ?? 0}"),
         _infoRow("Amount Paid", "₹${payment["amountPaid"] ?? 0}"),
         _infoRow("Balance", "₹${payment["balance"] ?? 0}"),
 

@@ -2166,13 +2166,19 @@ Widget buildPaymentStep() {
                   foregroundColor: Colors.black,
                   padding: const EdgeInsets.symmetric(vertical:16),
                 ),
-                onPressed: () {
+               onPressed: isButtonDisabled
+    ? null
+    : () async {
 
-  calculatePaymentSummary();
+        setState(() {
+          isButtonDisabled = true;
+        });
 
-  handleConfirmPayment();
+        calculatePaymentSummary();
 
-},
+        await handleConfirmPayment();
+
+      },
                 child: const Text(
                   "Confirm Booking",
                   style: TextStyle(fontWeight:FontWeight.bold),
@@ -3414,13 +3420,21 @@ if (appliedCredit > 0 && creditNoteId != null) {
 
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          "Bill Created Successfully. Receipt: $receiptNumber"
-        ),
+    Navigator.pushReplacement(
+  context,
+  MaterialPageRoute(
+    builder: (_) => ChangeNotifierProvider(
+      create: (_) => BookingDetailsProvider(
+        branchCode: branchCode,
+        receiptNumber: receiptNumber,
+      )..fetchDetails(),
+      child: BookingDetailsScreen(
+        receiptNumber: receiptNumber,
+        branchCode: branchCode,
       ),
-    );
+    ),
+  ),
+);
 
   } catch (error) {
 
