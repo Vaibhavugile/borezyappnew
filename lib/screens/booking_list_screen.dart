@@ -39,19 +39,15 @@ class _BookingListScreenState extends State<BookingListScreen> {
     if(filter == "created") source = provider.createdDocs;
     if(filter == "pickupTotal") source = provider.pickupDocs;
 
-    if(filter == "pickupPending"){
-      source = provider.pickupDocs
-          .where((d)=>d["bookingStage"]=="pickupPending")
-          .toList();
-    }
+   if(filter == "pickupPending"){
+  source = provider.pickupPendingDocs;
+}
 
     if(filter == "returnTotal") source = provider.returnDocs;
 
-    if(filter == "returnPending"){
-      source = provider.returnDocs
-          .where((d)=>d["bookingStage"]=="returnPending")
-          .toList();
-    }
+   if(filter == "returnPending"){
+  source = provider.returnPendingDocs;
+}
 
     if(searchText.isEmpty){
       filteredBookings = source;

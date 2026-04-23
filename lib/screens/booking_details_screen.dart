@@ -169,6 +169,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
           _infoRow("Identity", user["identityproof"]),
           _infoRow("Customer By", user["customerby"]),
           _infoRow("Receipt By", user["receiptby"]),
+          _infoRow("Alterations", user["alterations"]),
         ],
       ),
     );
@@ -545,7 +546,7 @@ Widget _productCard(List<Map<String, dynamic>> bookings) {
         // const Divider(),
 
         /// PAYMENT MODES
-        // _infoRow("Payment Status", payment["paymentStatus"]),
+        _infoRow("Payment Status", payment["paymentStatus"]),
         // _infoRow("First Payment Mode", payment["firstPaymentMode"]),
         // _infoRow("First Payment Details", payment["firstPaymentDetails"]),
         // _infoRow("Second Payment Mode", payment["secondPaymentMode"]),

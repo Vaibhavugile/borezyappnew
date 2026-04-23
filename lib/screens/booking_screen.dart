@@ -5,6 +5,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import 'main_screen.dart';
+import '../providers/booking_details_provider.dart';
+import 'booking_details_screen.dart';
 class Booking extends StatefulWidget {
   const Booking({super.key});
 
@@ -25,6 +27,45 @@ DateTime getFixedPickupTime(DateTime date) {
 }
 String getBranchCode() {
   return Provider.of<UserProvider>(context, listen: false).branchCode ?? "";
+}
+bool validateCustomerStep() {
+
+  if(userDetails["name"].toString().trim().isEmpty){
+    showError("Customer name is required");
+    return false;
+  }
+
+  if(userDetails["contact"].toString().trim().isEmpty){
+    showError("Mobile number is required");
+    return false;
+  }
+
+  if(userDetails["contact"].toString().length != 10){
+    showError("Enter valid 10 digit mobile number");
+    return false;
+  }
+
+  if(userDetails["customerby"].toString().trim().isEmpty){
+    showError("Please select Customer By");
+    return false;
+  }
+
+  if(userDetails["receiptby"].toString().trim().isEmpty){
+    showError("Please select Receipt By");
+    return false;
+  }
+
+  return true;
+}
+void showError(String message){
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(message),
+      backgroundColor: Colors.red,
+    ),
+  );
+
 }
 
 DateTime getFixedReturnTime(DateTime date) {
@@ -125,18 +166,49 @@ onWillPop: () async {
 child: Scaffold(
   backgroundColor: const Color(0xFFFBF9F8),
 
-  appBar: AppBar(
-    backgroundColor: const Color(0xFFFBF9F8),
-    elevation: 0,
-    title: const Text(
-      "Borezy",
-      style: TextStyle(
-        color: Color(0xFF735C00),
-        fontWeight: FontWeight.w600,
-        fontSize: 22,
-      ),
+ appBar: AppBar(
+  backgroundColor: const Color(0xFFFBF9F8),
+  elevation: 0,
+  title: const Text(
+    "Borezy",
+    style: TextStyle(
+      color: Color(0xFF735C00),
+      fontWeight: FontWeight.w600,
+      fontSize: 22,
     ),
   ),
+
+  actions: [
+
+    /// REFRESH BUTTON (Only Step 1)
+    if(wizardStep == 1)
+
+      IconButton(
+        icon: const Icon(
+          Icons.refresh,
+          color: Color(0xFF735C00),
+        ),
+
+        onPressed: () {
+
+          setState(() {
+
+            products = getInitialProducts();
+
+            productControllers.clear();
+            productControllers.add(TextEditingController());
+
+            activeProductIndex = null;
+            productSuggestions = [];
+
+          });
+
+        },
+
+      ),
+
+  ],
+),
 
   body: buildStep(),
 ),
@@ -814,14 +886,43 @@ Widget buildBookingsSidebar(var product){
               "${pickup.day}/${pickup.month} - ${drop.day}/${drop.month}";
 
           return Padding(
-            padding: const EdgeInsets.only(bottom:6),
-            child: buildBookingItemCompact(
-              booking["receiptNumber"] ?? "",
-              "${booking["quantity"]} QTY",
-              date,
-              booking["status"] ?? "Booking",
+  padding: const EdgeInsets.only(bottom:6),
+
+  child: InkWell(
+
+    borderRadius: BorderRadius.circular(10),
+
+    onTap: () {
+
+      String branchCode = getBranchCode();
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ChangeNotifierProvider(
+            create: (_) => BookingDetailsProvider(
+              branchCode: branchCode,
+              receiptNumber: booking["receiptNumber"],
+            )..fetchDetails(),
+            child: BookingDetailsScreen(
+              receiptNumber: booking["receiptNumber"],
+              branchCode: branchCode,
             ),
-          );
+          ),
+        ),
+      );
+
+    },
+
+    child: buildBookingItemCompact(
+      booking["receiptNumber"] ?? "",
+      "${booking["quantity"]} QTY",
+      date,
+      booking["status"] ?? "Booking",
+    ),
+
+  ),
+);
 
         }).toList(),
 
@@ -1296,8 +1397,14 @@ Widget buildCustomerStep() {
             Expanded(
               child: ElevatedButton(
                 onPressed: (){
-                  handleBookingConfirmation();
-                },
+
+  if(!validateCustomerStep()){
+    return;
+  }
+
+  handleBookingConfirmation();
+
+},
                 child: const Text("Continue to Review"),
               ),
             ),
@@ -1899,6 +2006,47 @@ Widget buildPaymentStep() {
           ),
 
         const SizedBox(height:24),
+        if(appliedCredit > 0)
+  Container(
+    margin: const EdgeInsets.only(top:12),
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(16),
+      color: const Color(0xFFE3F2FD),
+    ),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+
+            Text(
+              "Applied Credit",
+              style: TextStyle(
+                fontSize:12,
+                color:Colors.black54,
+              ),
+            ),
+
+          ],
+        ),
+
+        Text(
+          "- ₹$appliedCredit",
+          style: const TextStyle(
+            fontSize:20,
+            fontWeight:FontWeight.bold,
+            color:Colors.blue,
+          ),
+        ),
+
+      ],
+    ),
+  ),
+          const SizedBox(height:24),
+
 
         /// TOTAL + BALANCE
         Row(
@@ -2447,17 +2595,21 @@ DateTime bookingReturn = returnTimestamp.toDate();
           bookingData["userDetails"]?["stage"] ?? "booking";
 
       /// Store booking for UI
-      if (status != "successful") {
+      /// Store booking for UI (hide completed/cancelled bookings)
 
-        allBookings.add({
-          "receiptNumber": bookingData["receiptNumber"],
-          "pickupDate": bookingPickup,
-          "returnDate": bookingReturn,
-          "quantity": bookingQty,
-          "status": status
-        });
+if (status != "successful" &&
+    status != "cancelled" &&
+    status != "postponed") {
 
-      }
+  allBookings.add({
+    "receiptNumber": bookingData["receiptNumber"],
+    "pickupDate": bookingPickup,
+    "returnDate": bookingReturn,
+    "quantity": bookingQty,
+    "status": status
+  });
+
+}
 
       /// Ignore these statuses for stock calculation
       if (status == "cancelled" ||
@@ -2557,7 +2709,8 @@ void calculateTotals() {
   double paid =
       double.tryParse(userDetails["amountpaid"].toString()) ?? 0;
 
-  double finalRent = rent - discountRent;
+  /// APPLY CREDIT HERE
+  double finalRent = rent - discountRent - appliedCredit;
   double finalDeposit = deposit - discountDeposit;
 
   if (finalRent < 0) finalRent = 0;
@@ -2608,6 +2761,7 @@ void calculateGrandTotals() {
   calculateTotals();
 }
 void handleApplyCredit(){
+  if(appliedCredit > 0) return;
 
   double finalRent =
       double.tryParse(userDetails["finalrent"].toString()) ?? 0;
@@ -3092,11 +3246,14 @@ Future<void> handleConfirmPayment() async {
 
       var productData = productDoc.data();
 
-      int price = productData?["price"] ?? 0;
-      int deposit = productData?["deposit"] ?? 0;
+int price =
+    int.tryParse((productData?["price"] ?? "0").toString()) ?? 0;
 
-      int quantity =
-          int.tryParse(product["quantity"].toString()) ?? 0;
+int deposit =
+    int.tryParse((productData?["deposit"] ?? "0").toString()) ?? 0;
+
+int quantity =
+    int.tryParse(product["quantity"].toString()) ?? 0;
 
       int bookingId =
           await getNextBookingId(pickupDateObj, product["productCode"]) ?? 1;

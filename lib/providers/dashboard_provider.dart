@@ -15,6 +15,8 @@ class DashboardProvider extends ChangeNotifier {
   List createdDocs = [];
   List pickupDocs = [];
   List returnDocs = [];
+  List pickupPendingDocs = [];
+List returnPendingDocs = [];
 
   Map<String, List<Map<String, dynamic>>> receiptProducts = {};
 
@@ -48,27 +50,48 @@ class DashboardProvider extends ChangeNotifier {
         .doc(branchCode)
         .collection("payments");
 
+      
+
     /// RUN PAYMENT QUERIES IN PARALLEL
     final results = await Future.wait([
-      paymentsRef
-          .where("createdAt", isGreaterThanOrEqualTo: start)
-          .where("createdAt", isLessThan: end)
-          .get(),
 
-      paymentsRef
-          .where("pickupDate", isGreaterThanOrEqualTo: start)
-          .where("pickupDate", isLessThan: end)
-          .get(),
+  /// CREATED TODAY
+  paymentsRef
+      .where("createdAt", isGreaterThanOrEqualTo: start)
+      .where("createdAt", isLessThan: end)
+      .get(),
 
-      paymentsRef
-          .where("returnDate", isGreaterThanOrEqualTo: start)
-          .where("returnDate", isLessThan: end)
-          .get(),
-    ]);
+  /// PICKUPS TODAY
+  paymentsRef
+      .where("pickupDate", isGreaterThanOrEqualTo: start)
+      .where("pickupDate", isLessThan: end)
+      .get(),
 
+  /// RETURNS TODAY
+  paymentsRef
+      .where("returnDate", isGreaterThanOrEqualTo: start)
+      .where("returnDate", isLessThan: end)
+      .get(),
+
+  /// ALL PICKUP PENDING
+  paymentsRef
+      .where("bookingStage", isEqualTo: "pickupPending")
+      .get(),
+
+  /// ALL RETURN PENDING
+  paymentsRef
+      .where("bookingStage", isEqualTo: "returnPending")
+      .get(),
+
+]);
     var createdSnap = results[0];
-    var pickupSnap = results[1];
-    var returnSnap = results[2];
+var pickupSnap = results[1];
+var returnSnap = results[2];
+
+var pickupPendingSnap = results[3];
+var returnPendingSnap = results[4];
+pickupPendingDocs = pickupPendingSnap.docs;
+returnPendingDocs = returnPendingSnap.docs;
 
     createdDocs = [];
     pickupDocs = [];
@@ -114,9 +137,6 @@ class DashboardProvider extends ChangeNotifier {
       pickupDocs.add(doc);
       pickupTotal++;
 
-      if (data["bookingStage"] == "pickupPending") {
-        pickupPending++;
-      }
 
       rentPendingCalc += (data["rentPending"] ?? 0).toDouble();
       depositPendingCalc += (data["depositPending"] ?? 0).toDouble();
@@ -133,10 +153,7 @@ class DashboardProvider extends ChangeNotifier {
       returnDocs.add(doc);
       returnTotal++;
 
-      if (data["bookingStage"] == "returnPending") {
-        returnPending++;
-      }
-
+      
       String receipt = data["receiptNumber"] ?? "";
       if (receipt.isNotEmpty) receipts.add(receipt);
     }
@@ -177,6 +194,7 @@ class DashboardProvider extends ChangeNotifier {
 
     receiptProducts = bookingsByReceipt;
 
+
     /// CALCULATE PICKUPS
     for (var doc in pickupDocs) {
 
@@ -216,7 +234,8 @@ class DashboardProvider extends ChangeNotifier {
         }
       }
     }
-
+pickupPending = pickupPendingSnap.docs.length;
+returnPending = returnPendingSnap.docs.length;
     productsOutToday = productsOutTotal;
     productsOutDone = productsOutTotal - productsOutPending;
 
