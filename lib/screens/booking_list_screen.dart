@@ -49,25 +49,40 @@ class _BookingListScreenState extends State<BookingListScreen> {
   source = provider.returnPendingDocs;
 }
 
-    if(searchText.isEmpty){
-      filteredBookings = source;
-    } else {
+   if(searchText.isEmpty){
+  filteredBookings = List.from(source);
+} else {
 
-      filteredBookings = source.where((doc){
+  filteredBookings = source.where((doc){
 
-        var data = doc.data();
+    var data = doc.data();
 
-        String name =
-            (data["clientName"] ?? "").toLowerCase();
+    String name =
+        (data["clientName"] ?? "").toLowerCase();
 
-        String receipt =
-            (data["receiptNumber"] ?? "").toLowerCase();
+    String receipt =
+        (data["receiptNumber"] ?? "").toLowerCase();
 
-        return name.contains(searchText) ||
-            receipt.contains(searchText);
+    return name.contains(searchText) ||
+        receipt.contains(searchText);
 
-      }).toList();
-    }
+  }).toList();
+
+}
+
+/// ⭐ SORT BY CREATED DATE (LATEST FIRST)
+
+filteredBookings.sort((a,b){
+
+  DateTime aDate =
+      (a.data()["createdAt"]?.toDate()) ?? DateTime(2000);
+
+  DateTime bDate =
+      (b.data()["createdAt"]?.toDate()) ?? DateTime(2000);
+
+  return bDate.compareTo(aDate);
+
+});
 
     if(mounted){
       setState(() {});
