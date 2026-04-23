@@ -61,15 +61,11 @@ String customerName = provider.customerDetails?["name"] ?? "";
   onWillPop: () async {
 
     Navigator.pushAndRemoveUntil(
-
       context,
-
       MaterialPageRoute(
         builder: (_) => const MainScreen(initialIndex: 2),
       ),
-
       (route) => false,
-
     );
 
     return false;
@@ -81,17 +77,17 @@ String customerName = provider.customerDetails?["name"] ?? "";
 
       appBar: AppBar(
 
-  title: Text("Receipt ${widget.receiptNumber}"),
+       title: Text("Receipt ${widget.receiptNumber}"),
 
-  actions: [
+      actions: [
 
     /// WHATSAPP TEMPLATE BUTTON
     IconButton(
 
       icon: const Icon(
-  Icons.message,
-  color: Colors.green,
-),
+        Icons.message,
+            color: Colors.green,
+      ),
 
       onPressed: (){
         _openTemplateModal(context);
@@ -120,7 +116,7 @@ String customerName = provider.customerDetails?["name"] ?? "";
             _customerCard(user),
               const SizedBox(height:18),
 
-  _updateReceiptSection(context),
+       _updateReceiptSection(context),
 
             const SizedBox(height:18),
 
@@ -139,70 +135,115 @@ String customerName = provider.customerDetails?["name"] ?? "";
             _accountSummary(payment),
             const SizedBox(height:18),
 
-Row(
-  children: [
-
-    Expanded(
-      child: ElevatedButton.icon(
-        icon: const Icon(Icons.payments_outlined),
-        label: const Text("Add Payment"),
-        onPressed: (){
-           showAddPaymentModal(context);
-        },
-      ),
-    ),
-
-    const SizedBox(width:12),
-
-    Expanded(
-      child: ElevatedButton.icon(
-        icon: const Icon(Icons.undo),
-        label: const Text("Refund Deposit"),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.red,
-        ),
-        onPressed: (){
-         showRefundModal(context);
-        },
-      ),
-    ),
-
-  ],
-),
+       
 
           ],
         ),
       ),
-    );
-    );
+      bottomNavigationBar: Container(
+
+  padding: const EdgeInsets.fromLTRB(18,12,18,18),
+
+  decoration: const BoxDecoration(
+    color: Colors.white,
+  ),
+
+  child: SafeArea(
+
+    child: Row(
+      children: [
+
+        Expanded(
+          child: ElevatedButton.icon(
+            icon: const Icon(Icons.payments_outlined),
+            label: const Text("Add Payment"),
+            onPressed: (){
+              showAddPaymentModal(context);
+            },
+          ),
+        ),
+
+        const SizedBox(width:12),
+
+        Expanded(
+          child: ElevatedButton.icon(
+            icon: const Icon(Icons.undo),
+            label: const Text("Refund Deposit"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            onPressed: (){
+              showRefundModal(context);
+            },
+          ),
+        ),
+
+      ],
+    ),
+
+  ),
+),
+      
+    ),
+    );  
   }
 
   /// STAGE BADGE
-  Widget _stageBadge(String stage){
+ Widget _stageBadge(String stage){
 
-    Color color = const Color(0xFFD4AF37);
+  Color color;
 
-    if(stage == "pickupPending") color = Colors.orange;
-    if(stage == "pickup") color = Colors.blue;
-    if(stage == "returnPending") color = Colors.purple;
-    if(stage == "returned") color = Colors.green;
-    if(stage == "cancelled") color = Colors.red;
+  switch(stage){
 
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical:10,horizontal:14),
-      decoration: BoxDecoration(
-        color: color.withOpacity(.1),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        stage,
-        style: TextStyle(
-          color: color,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
+    case "Booking":
+      color = const Color(0xFFD4AF37); // gold
+      break;
+
+    case "pickupPending":
+      color = Colors.orange;
+      break;
+
+    case "pickup":
+      color = Colors.blue;
+      break;
+
+    case "returnPending":
+      color = Colors.deepPurple;
+      break;
+
+    case "return":
+      color = Colors.green;
+      break;
+
+    case "successful":
+      color = Colors.teal;
+      break;
+
+    case "cancelled":
+      color = Colors.red;
+      break;
+
+    default:
+      color = Colors.grey;
   }
+
+  return Container(
+    padding: const EdgeInsets.symmetric(vertical:10,horizontal:14),
+    decoration: BoxDecoration(
+      color: color.withOpacity(.12),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: color.withOpacity(.35)),
+    ),
+    child: Text(
+      stage,
+      style: TextStyle(
+        color: color,
+        fontWeight: FontWeight.w700,
+        letterSpacing: .5,
+      ),
+    ),
+  );
+}
 
   /// CUSTOMER CARD
   Widget _customerCard(Map user){

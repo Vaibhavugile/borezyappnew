@@ -182,14 +182,33 @@ void openWhatsAppTemplates(BuildContext context, String receiptNumber) {
 
   Color stageColor(){
 
-    if(stage == "pickupPending") return const Color(0xFFF59E0B);
-    if(stage == "pickedUp") return const Color(0xFF2563EB);
-    if(stage == "returnPending") return const Color(0xFF10B981);
-    if(stage == "returned") return const Color(0xFF6B7280);
+  switch(stage){
 
-    return Colors.grey;
+    case "Booking":
+      return const Color(0xFFD4AF37); // gold
+
+    case "pickupPending":
+      return const Color(0xFFF59E0B); // orange
+
+    case "pickup":
+      return const Color(0xFF2563EB); // blue
+
+    case "returnPending":
+      return const Color(0xFF7C3AED); // purple
+
+    case "return":
+      return const Color(0xFF10B981); // green
+
+    case "successful":
+      return const Color(0xFF059669); // dark green
+
+    case "cancelled":
+      return const Color(0xFFEF4444); // red
+
+    default:
+      return Colors.grey;
   }
-
+}
   return Dismissible(
 
     key: Key(data["receiptNumber"]),

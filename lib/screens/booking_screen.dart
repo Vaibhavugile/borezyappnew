@@ -25,6 +25,7 @@ DateTime getFixedPickupTime(DateTime date) {
     0,
   );
 }
+final ScrollController _scrollController = ScrollController();
 String getBranchCode() {
   return Provider.of<UserProvider>(context, listen: false).branchCode ?? "";
 }
@@ -1007,6 +1008,7 @@ Widget buildBookingsSidebar(var product){
 Widget buildCustomerStep() {
 
   return SingleChildScrollView(
+  controller: _scrollController,
     padding: const EdgeInsets.all(20),
     child: Column(
       children: [
@@ -1436,6 +1438,7 @@ Widget buildReviewStep() {
   List reviewProducts = receipt["products"] ?? [];
 
   return SingleChildScrollView(
+  controller: _scrollController,
     padding: const EdgeInsets.all(20),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1723,8 +1726,10 @@ Widget buildReviewStep() {
   calculateGrandTotals();
 
   setState(() {
-    wizardStep = 4;
-  });
+  wizardStep = 4;
+});
+
+_scrollController.jumpTo(0);
 
 },
                 child: const Text("Proceed to Payment"),
@@ -1779,6 +1784,7 @@ Widget buildPriceChip(String title,String value){
 Widget buildPaymentStep() {
 
   return SingleChildScrollView(
+  controller: _scrollController,
     padding: const EdgeInsets.symmetric(horizontal:20, vertical:10),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2327,8 +2333,10 @@ void addProductForm(){
   void toggleAvailability1Form(bool fromWizard){
 
     setState(() {
-      wizardStep = 2;
-    });
+  wizardStep = 2;
+});
+
+_scrollController.jumpTo(0);
   }
   
 void handleProductChange(int index, String name, String value) async {
@@ -3033,14 +3041,15 @@ int extraRent =
     /// ✅ STEP 3 — CREATE RECEIPT FIRST
     setState(() {
 
-      receipt = {
-        "products": bookingDetails
-      };
+  receipt = {
+    "products": bookingDetails
+  };
 
-      /// ✅ STEP 4 — MOVE TO REVIEW STEP
-      wizardStep = 3;
+  wizardStep = 3;
 
-    });
+});
+
+_scrollController.jumpTo(0);
 
   } catch (error) {
 
