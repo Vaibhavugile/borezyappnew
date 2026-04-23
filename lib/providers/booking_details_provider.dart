@@ -388,5 +388,233 @@ List<Map<String, dynamic>> productsList = bookings.map((doc) {
 
   return message;
 }
+Future<void> handleAddPayment(
+  double amount,
+  String mode,
+  String details,
+  String userName,
+  String customerName,
+) async {
 
+  final db = FirebaseFirestore.instance;
+
+  final paymentRef = db
+      .collection("products")
+      .doc(branchCode)
+      .collection("payments")
+      .doc(receiptNumber);
+
+  final transactionsRef = paymentRef.collection("transactions");
+
+  final paymentSnap = await paymentRef.get();
+
+  Map<String, dynamic> paymentDoc = paymentSnap.data() ?? {};
+
+  double newPaid = (paymentDoc["amountPaid"] ?? 0).toDouble() + amount;
+  double totalAmount = (paymentDoc["totalAmount"] ?? 0).toDouble();
+
+  double newBalance = totalAmount - newPaid;
+  if (newBalance < 0) newBalance = 0;
+
+  /// GET NEXT TRANSACTION NUMBER
+  var snapshot = await transactionsRef.get();
+  int nextPaymentNumber = snapshot.docs.length + 1;
+
+  String transactionId = "tx$nextPaymentNumber";
+
+  /// SAVE TRANSACTION
+  await transactionsRef.doc(transactionId).set({
+    "amount": amount,
+    "mode": mode,
+    "details": details,
+    "paymentNumber": nextPaymentNumber,
+    "createdAt": FieldValue.serverTimestamp(),
+    "createdBy": userName
+  });
+
+  /// CALCULATE RENT / DEPOSIT SPLIT
+  double rent = (paymentDoc["finalRent"] ?? 0).toDouble();
+  double deposit = (paymentDoc["finalDeposit"] ?? 0).toDouble();
+  double alreadyPaid = (paymentDoc["amountPaid"] ?? 0).toDouble();
+
+  double rentCollectedBefore = alreadyPaid > rent ? rent : alreadyPaid;
+  double rentPending = rent - rentCollectedBefore;
+
+  double rentPay = amount > rentPending ? rentPending : amount;
+  double depositPay = amount - rentPay;
+
+  final ledgerRef = db
+      .collection("products")
+      .doc(branchCode)
+      .collection("ledger");
+
+  /// RENT LEDGER ENTRY
+  if (rentPay > 0) {
+    await ledgerRef.add({
+      "receiptNumber": receiptNumber,
+      "customerName": customerName,
+      "type": "rentPayment",
+      "amount": rentPay,
+      "mode": mode,
+      "details": details,
+      "createdAt": FieldValue.serverTimestamp(),
+      "createdBy": userName
+    });
+  }
+
+  /// DEPOSIT LEDGER ENTRY
+  if (depositPay > 0) {
+    await ledgerRef.add({
+      "receiptNumber": receiptNumber,
+      "customerName": customerName,
+      "type": "depositPayment",
+      "amount": depositPay,
+      "mode": mode,
+      "details": details,
+      "createdAt": FieldValue.serverTimestamp(),
+      "createdBy": userName
+    });
+  }
+
+  /// UPDATE PAYMENT DOCUMENT
+  await paymentRef.update({
+    "amountPaid": newPaid,
+    "balance": newBalance
+  });
+
+  /// UPDATE ALL BOOKING DOCUMENTS
+  WriteBatch batch = db.batch();
+
+  for (var booking in bookings) {
+
+    DocumentReference bookingRef = booking["docRef"];
+
+    batch.update(bookingRef, {
+      "userDetails.amountpaid": newPaid,
+      "userDetails.balance": newBalance
+    });
+
+  }
+
+  await batch.commit();
+  await updateAccountSummary();
+
+  await fetchDetails();
+}
+Future<void> handleReturnDeposit(
+  double amount,
+  String mode,
+  String details,
+  String userName,
+  String customerName,
+) async {
+
+  final db = FirebaseFirestore.instance;
+
+  final transactionsRef = db
+      .collection("products")
+      .doc(branchCode)
+      .collection("payments")
+      .doc(receiptNumber)
+      .collection("transactions");
+
+  final snapshot = await transactionsRef.get();
+
+  int nextPaymentNumber = snapshot.docs.length + 1;
+  String transactionId = "tx$nextPaymentNumber";
+
+  /// SAVE REFUND TRANSACTION
+  await transactionsRef.doc(transactionId).set({
+    "amount": amount,
+    "mode": mode,
+    "details": details,
+    "paymentNumber": nextPaymentNumber,
+    "type": "depositReturn",
+    "createdAt": FieldValue.serverTimestamp(),
+    "createdBy": userName
+  });
+
+  /// SAVE LEDGER ENTRY
+  await db
+      .collection("products")
+      .doc(branchCode)
+      .collection("ledger")
+      .add({
+    "receiptNumber": receiptNumber,
+    "customerName": customerName,
+    "type": "depositReturn",
+    "amount": amount,
+    "mode": mode,
+    "details": details,
+    "createdAt": FieldValue.serverTimestamp(),
+    "createdBy": userName
+  });
+await updateAccountSummary();
+  await fetchDetails();
+}
+Future<void> updateAccountSummary() async {
+
+  final db = FirebaseFirestore.instance;
+
+  final paymentRef = db
+      .collection("products")
+      .doc(branchCode)
+      .collection("payments")
+      .doc(receiptNumber);
+
+  final transactionsRef = paymentRef.collection("transactions");
+
+  final paymentSnap = await paymentRef.get();
+  final txSnap = await transactionsRef.get();
+
+  Map<String,dynamic> paymentDoc = paymentSnap.data() ?? {};
+
+  double totalPaid = 0;
+  double totalRefunded = 0;
+
+  for(var doc in txSnap.docs){
+
+    var data = doc.data();
+
+    if(data["type"] == "depositReturn"){
+      totalRefunded += (data["amount"] ?? 0).toDouble();
+    }else{
+      totalPaid += (data["amount"] ?? 0).toDouble();
+    }
+
+  }
+
+  double rent = (paymentDoc["finalRent"] ?? 0).toDouble();
+  double deposit = (paymentDoc["finalDeposit"] ?? 0).toDouble();
+
+  double rentCollected = totalPaid > rent ? rent : totalPaid;
+  double rentPending = rent - rentCollected;
+
+  double depositCollected = totalPaid > rent ? totalPaid - rent : 0;
+
+  double depositPending = deposit - depositCollected;
+
+  if(depositPending < 0) depositPending = 0;
+
+  double depositReturned = totalRefunded;
+
+  double depositWithYou =
+      (depositCollected - depositReturned) < 0
+          ? 0
+          : (depositCollected - depositReturned);
+
+  await paymentRef.update({
+
+    "rentCollected": rentCollected,
+    "rentPending": rentPending,
+
+    "depositCollected": depositCollected,
+    "depositPending": depositPending,
+
+    "depositReturned": depositReturned,
+    "depositWithYou": depositWithYou,
+
+  });
+
+}
 }

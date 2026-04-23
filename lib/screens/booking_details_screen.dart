@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/booking_details_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../providers/user_provider.dart';
 class BookingDetailsScreen extends StatefulWidget {
 
   final String receiptNumber;
@@ -20,7 +21,7 @@ class BookingDetailsScreen extends StatefulWidget {
 class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
   final TextEditingController specialNoteController = TextEditingController();
   bool isEditing = false;
-
+  bool isProcessingPayment = false;
   @override
   void initState() {
     super.initState();
@@ -34,8 +35,10 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
   @override
   Widget build(BuildContext context) {
 
-    var provider = Provider.of<BookingDetailsProvider>(context);
-
+var provider = Provider.of<BookingDetailsProvider>(context);
+final userProvider = Provider.of<UserProvider>(context);
+String userName = userProvider.userData?["name"] ?? "";
+String customerName = provider.customerDetails?["name"] ?? "";
     if(provider.loading){
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
@@ -44,6 +47,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
     var bookings = provider.bookings;
     var payment = provider.paymentDoc;
     var user = provider.customerDetails ?? {};
+
 
     if(bookings.isEmpty){
       return const Scaffold(
@@ -113,6 +117,38 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
             const SizedBox(height:18),
 
             _accountSummary(payment),
+            const SizedBox(height:18),
+
+Row(
+  children: [
+
+    Expanded(
+      child: ElevatedButton.icon(
+        icon: const Icon(Icons.payments_outlined),
+        label: const Text("Add Payment"),
+        onPressed: (){
+           showAddPaymentModal(context);
+        },
+      ),
+    ),
+
+    const SizedBox(width:12),
+
+    Expanded(
+      child: ElevatedButton.icon(
+        icon: const Icon(Icons.undo),
+        label: const Text("Refund Deposit"),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.red,
+        ),
+        onPressed: (){
+         showRefundModal(context);
+        },
+      ),
+    ),
+
+  ],
+),
 
           ],
         ),
@@ -398,7 +434,16 @@ Widget _productCard(List<Map<String, dynamic>> bookings) {
           var data = doc;
 
           var img = data["product"]?["imageUrls"];
-          String? imageUrl = img is List ? img.first : img;
+
+String? imageUrl;
+
+if (img is List && img.isNotEmpty) {
+  imageUrl = img.first;
+} else if (img is String) {
+  imageUrl = img;
+} else {
+  imageUrl = null;
+}
 
           return Container(
 
@@ -558,77 +603,157 @@ Widget _productCard(List<Map<String, dynamic>> bookings) {
 }
 
   /// PAYMENT HISTORY
-  Widget _paymentHistory(List transactions){
+ Widget _paymentHistory(List transactions){
 
-    return _cardWrapper(
+return _cardWrapper(
 
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
 
-          const Text(
-            "Payment History",
-            style: TextStyle(fontSize:18,fontWeight: FontWeight.w600),
-          ),
+child: Column(
+  crossAxisAlignment: CrossAxisAlignment.start,
+  children: [
 
-          const SizedBox(height:16),
+    const Text(
+      "Payment History",
+      style: TextStyle(fontSize:18,fontWeight: FontWeight.w600),
+    ),
 
-          if(transactions.isEmpty)
-            const Text("No payments recorded"),
+    const SizedBox(height:16),
 
-          ...transactions.map((tx){
+    if(transactions.isEmpty)
+      const Text("No payments recorded"),
 
-            var data = tx.data();
+    ...transactions.map((tx){
 
-            return Container(
+      var data = tx.data() as Map<String, dynamic>;
 
-              margin: const EdgeInsets.only(bottom:12),
+      bool isRefund = data["type"] == "depositReturn";
 
-              padding: const EdgeInsets.all(12),
+      return Container(
 
+        margin: const EdgeInsets.only(bottom:12),
+
+        padding: const EdgeInsets.all(14),
+
+        decoration: BoxDecoration(
+          color: const Color(0xFFF6F3F2),
+          borderRadius: BorderRadius.circular(14),
+        ),
+
+        child: Row(
+
+          children: [
+
+            /// LEFT ICON
+            Container(
+              width:42,
+              height:42,
               decoration: BoxDecoration(
-                color: const Color(0xFFF6F3F2),
-                borderRadius: BorderRadius.circular(12),
+                color: isRefund
+                    ? Colors.red.withOpacity(.1)
+                    : const Color(0xFFD4AF37).withOpacity(.1),
+                borderRadius: BorderRadius.circular(10),
               ),
+              child: Icon(
+                isRefund
+                    ? Icons.undo_rounded
+                    : Icons.payments_outlined,
+                color: isRefund
+                    ? Colors.red
+                    : const Color(0xFF735C00),
+              ),
+            ),
 
-              child: Row(
+            const SizedBox(width:12),
 
+            /// DETAILS
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
 
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+                  Row(
+  children: [
 
-                        Text(
-                          data["mode"] ?? "",
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
+    Expanded(
+      child: Text(
+        isRefund
+            ? "Deposit Refunded"
+            : "Payment ${data["paymentNumber"] ?? ""}",
+        style: const TextStyle(
+          fontWeight: FontWeight.w600,
+        ),
+        overflow: TextOverflow.ellipsis,
+      ),
+    ),
 
-                        Text(
-                          data["details"] ?? "",
-                          style: const TextStyle(fontSize:12),
-                        ),
+    const SizedBox(width:8),
 
-                      ],
-                    ),
-                  ),
+    if(isRefund)
+      Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal:8,
+          vertical:2,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.red.withOpacity(.1),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: const Text(
+          "Refunded",
+          style: TextStyle(
+            fontSize:11,
+            fontWeight: FontWeight.w600,
+            color: Colors.red,
+          ),
+        ),
+      ),
+  ],
+),
+
+                  const SizedBox(height:2),
 
                   Text(
-                    "₹${data["amount"]}",
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  )
+                    data["mode"] ?? "",
+                    style: const TextStyle(fontSize:12),
+                  ),
+
+                  if((data["details"] ?? "").toString().isNotEmpty)
+                    Text(
+                      data["details"],
+                      style: const TextStyle(
+                        fontSize:12,
+                        color: Colors.grey,
+                      ),
+                    ),
 
                 ],
               ),
-            );
+            ),
 
-          })
+            /// AMOUNT
+            Text(
+              "₹${data["amount"]}",
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: isRefund
+                    ? Colors.red
+                    : Colors.green,
+              ),
+            )
 
-        ],
-      ),
-    );
-  }
+          ],
+        ),
+      );
+
+    }).toList()
+
+  ],
+),
+
+
+);
+}
+
 
   /// ACCOUNT SUMMARY
  Widget _accountSummary(Map? payment){
@@ -998,6 +1123,303 @@ Future<void> sendWhatsAppMessage(String phone, String message) async {
 
   }
 
-}
 
+}
+void showAddPaymentModal(BuildContext context) {
+
+  final provider =
+      Provider.of<BookingDetailsProvider>(context, listen:false);
+
+  final userProvider =
+      Provider.of<UserProvider>(context, listen:false);
+
+  String userName = userProvider.userData?["name"] ?? "";
+  String customerName = provider.customerDetails?["name"] ?? "";
+
+  TextEditingController amountController = TextEditingController();
+  TextEditingController detailsController = TextEditingController();
+
+  String mode = "Cash";
+
+  showDialog(
+    context: context,
+    builder: (context){
+
+      bool isProcessing = false;
+
+      return StatefulBuilder(
+        builder: (context, setModalState) {
+
+          return Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+
+                  const Text(
+                    "Add Payment",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600
+                    ),
+                  ),
+
+                  const SizedBox(height:20),
+
+                  TextField(
+                    controller: amountController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: "Amount"
+                    ),
+                  ),
+
+                  const SizedBox(height:12),
+
+                  DropdownButtonFormField<String>(
+                    value: mode,
+                    items: const [
+                      DropdownMenuItem(value: "Cash", child: Text("Cash")),
+                      DropdownMenuItem(value: "UPI", child: Text("UPI")),
+                      DropdownMenuItem(value: "Card", child: Text("Card")),
+                      DropdownMenuItem(value: "Bank", child: Text("Bank Transfer")),
+                    ],
+                    onChanged: (v){
+                      mode = v!;
+                    },
+                    decoration: const InputDecoration(
+                      labelText: "Payment Mode"
+                    ),
+                  ),
+
+                  const SizedBox(height:12),
+
+                  TextField(
+                    controller: detailsController,
+                    decoration: const InputDecoration(
+                      labelText: "Details (optional)"
+                    ),
+                  ),
+
+                  const SizedBox(height:20),
+
+                  Row(
+                    children: [
+
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: (){
+                            Navigator.pop(context);
+                          },
+                          child: const Text("Cancel"),
+                        ),
+                      ),
+
+                      const SizedBox(width:10),
+
+                      Expanded(
+                        child: ElevatedButton(
+
+                          onPressed: isProcessing ? null : () async {
+
+                            setModalState(() {
+                              isProcessing = true;
+                            });
+
+                            double amount =
+                                double.tryParse(amountController.text) ?? 0;
+
+                            if(amount <= 0){
+                              setModalState(() {
+                                isProcessing = false;
+                              });
+                              return;
+                            }
+
+                            await provider.handleAddPayment(
+                              amount,
+                              mode,
+                              detailsController.text,
+                              userName,
+                              customerName
+                            );
+
+                            if(context.mounted){
+                              Navigator.pop(context);
+                            }
+
+                          },
+
+                          child: isProcessing
+                              ? const SizedBox(
+                                  height:20,
+                                  width:20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth:2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text("Add Payment"),
+
+                        ),
+                      )
+
+                    ],
+                  )
+
+                ],
+              ),
+            ),
+          );
+
+        },
+      );
+    },
+  );
+}
+void showRefundModal(BuildContext context){
+
+  final provider =
+      Provider.of<BookingDetailsProvider>(context, listen:false);
+
+  final userProvider =
+      Provider.of<UserProvider>(context, listen:false);
+
+  String userName = userProvider.userData?["name"] ?? "";
+  String customerName = provider.customerDetails?["name"] ?? "";
+
+  TextEditingController amountController = TextEditingController();
+  TextEditingController detailsController = TextEditingController();
+
+  String mode = "Cash";
+
+  showDialog(
+    context: context,
+    builder:(context){
+
+      bool isProcessing = false;
+
+      return StatefulBuilder(
+        builder: (context, setModalState) {
+
+          return Dialog(
+
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+
+                  const Text(
+                    "Refund Deposit",
+                    style: TextStyle(
+                      fontSize:20,
+                      fontWeight: FontWeight.w600
+                    ),
+                  ),
+
+                  const SizedBox(height:20),
+
+                  TextField(
+                    controller: amountController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: "Refund Amount"
+                    ),
+                  ),
+
+                  const SizedBox(height:12),
+
+                  DropdownButtonFormField<String>(
+                    value: mode,
+                    items: const [
+                      DropdownMenuItem(value:"Cash", child: Text("Cash")),
+                      DropdownMenuItem(value:"UPI", child: Text("UPI")),
+                      DropdownMenuItem(value:"Bank", child: Text("Bank Transfer")),
+                    ],
+                    onChanged:(v){
+                      mode = v!;
+                    },
+                    decoration: const InputDecoration(
+                      labelText: "Refund Mode"
+                    ),
+                  ),
+
+                  const SizedBox(height:12),
+
+                  TextField(
+                    controller: detailsController,
+                    decoration: const InputDecoration(
+                      labelText: "Details"
+                    ),
+                  ),
+
+                  const SizedBox(height:20),
+
+                  ElevatedButton(
+
+                    onPressed: isProcessing ? null : () async {
+
+                      setModalState(() {
+                        isProcessing = true;
+                      });
+
+                      double amount =
+                          double.tryParse(amountController.text) ?? 0;
+
+                      if(amount <= 0){
+                        setModalState(() {
+                          isProcessing = false;
+                        });
+                        return;
+                      }
+
+                      await provider.handleReturnDeposit(
+                        amount,
+                        mode,
+                        detailsController.text,
+                        userName,
+                        customerName
+                      );
+
+                      if(context.mounted){
+                        Navigator.pop(context);
+                      }
+
+                    },
+
+                    child: isProcessing
+                        ? const SizedBox(
+                            height:20,
+                            width:20,
+                            child: CircularProgressIndicator(
+                              strokeWidth:2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text("Refund Deposit"),
+
+                  ),
+
+                ],
+              ),
+            ),
+          );
+
+        },
+      );
+    },
+  );
+}
 }
