@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/booking_details_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../providers/user_provider.dart';
+import 'main_screen.dart';
 class BookingDetailsScreen extends StatefulWidget {
 
   final String receiptNumber;
@@ -55,7 +56,26 @@ String customerName = provider.customerDetails?["name"] ?? "";
       );
     }
 
-    return Scaffold(
+    return WillPopScope(
+
+  onWillPop: () async {
+
+    Navigator.pushAndRemoveUntil(
+
+      context,
+
+      MaterialPageRoute(
+        builder: (_) => const MainScreen(initialIndex: 2),
+      ),
+
+      (route) => false,
+
+    );
+
+    return false;
+  },
+
+  child: Scaffold(
 
       backgroundColor: const Color(0xFFFBF9F8),
 
@@ -153,6 +173,7 @@ Row(
           ],
         ),
       ),
+    );
     );
   }
 

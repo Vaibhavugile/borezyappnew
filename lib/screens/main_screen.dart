@@ -3,7 +3,13 @@ import 'dashboard_screen.dart';
 import 'booking_screen.dart';
 import 'booking_list_screen.dart';
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+
+  final int initialIndex;
+
+  const MainScreen({
+    super.key,
+    this.initialIndex = 0,
+  });
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -11,8 +17,13 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
 
-  int currentIndex = 0;
+late int currentIndex;
 
+@override
+void initState() {
+  super.initState();
+  currentIndex = widget.initialIndex;
+}
   final List pages = [
     const DashboardScreen(),
     const Booking(),

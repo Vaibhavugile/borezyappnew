@@ -2006,7 +2006,7 @@ Widget buildPaymentStep() {
       ],
     ),
   ),
-          const SizedBox(height:24),
+          const SizedBox(height:20),
 
 
         /// TOTAL + BALANCE
@@ -2037,97 +2037,97 @@ Widget buildPaymentStep() {
         const SizedBox(height:24),
 
         /// AMOUNT PAID
-        _premiumInput(
-  label: "Amount Paid",
-  keyboardType: TextInputType.number,
-  onChanged: (v) {
-    setState(() => userDetails["amountpaid"] = v);
-    calculateTotals();
-  },
-),
+//         _premiumInput(
+//   label: "Amount Paid",
+//   keyboardType: TextInputType.number,
+//   onChanged: (v) {
+//     setState(() => userDetails["amountpaid"] = v);
+//     calculateTotals();
+//   },
+// ),
 
-        const SizedBox(height:20),
+        // const SizedBox(height:20),
 
         /// PAYMENT STATUS
-        DropdownButtonFormField<String>(
-          value:userDetails["paymentstatus"]==""?null:userDetails["paymentstatus"],
+        // DropdownButtonFormField<String>(
+        //   value:userDetails["paymentstatus"]==""?null:userDetails["paymentstatus"],
 
-          items: const [
-            DropdownMenuItem(value:"fullpayment",child:Text("Full Payment")),
-            DropdownMenuItem(value:"depositpending",child:Text("Deposit Pending")),
-            DropdownMenuItem(value:"partialpayment",child:Text("Partial Payment")),
-          ],
+        //   items: const [
+        //     DropdownMenuItem(value:"fullpayment",child:Text("Full Payment")),
+        //     DropdownMenuItem(value:"depositpending",child:Text("Deposit Pending")),
+        //     DropdownMenuItem(value:"partialpayment",child:Text("Partial Payment")),
+        //   ],
 
-          decoration:_dropdownDecoration("Payment Status"),
+        //   decoration:_dropdownDecoration("Payment Status"),
 
-          onChanged:(v){
-            setState(()=>userDetails["paymentstatus"]=v);
-          },
-        ),
+        //   onChanged:(v){
+        //     setState(()=>userDetails["paymentstatus"]=v);
+        //   },
+        // ),
 
-        const SizedBox(height:20),
+        // const SizedBox(height:20),
 
         /// FIRST PAYMENT MODE
-        DropdownButtonFormField<String>(
-          value:userDetails["firstpaymentmode"]==""?null:userDetails["firstpaymentmode"],
+        // DropdownButtonFormField<String>(
+        //   value:userDetails["firstpaymentmode"]==""?null:userDetails["firstpaymentmode"],
 
-          items: const [
+        //   items: const [
 
-            DropdownMenuItem(value:"cash",child:Text("Cash")),
-            DropdownMenuItem(value:"upi",child:Text("UPI")),
-            DropdownMenuItem(value:"card",child:Text("Card")),
-            DropdownMenuItem(value:"banktransfer",child:Text("Bank Transfer")),
+        //     DropdownMenuItem(value:"cash",child:Text("Cash")),
+        //     DropdownMenuItem(value:"upi",child:Text("UPI")),
+        //     DropdownMenuItem(value:"card",child:Text("Card")),
+        //     DropdownMenuItem(value:"banktransfer",child:Text("Bank Transfer")),
 
-          ],
+        //   ],
 
-          decoration:_dropdownDecoration("First Payment Mode"),
+        //   decoration:_dropdownDecoration("First Payment Mode"),
 
-          onChanged:(v){
-            setState(()=>userDetails["firstpaymentmode"]=v);
-          },
-        ),
+        //   onChanged:(v){
+        //     setState(()=>userDetails["firstpaymentmode"]=v);
+        //   },
+        // ),
 
-        const SizedBox(height:16),
+        // const SizedBox(height:16),
 
-        _premiumInput(
-          label:"First Payment Details",
-          onChanged:(v){
-            userDetails["firstpaymentdtails"]=v;
-          },
-        ),
+        // _premiumInput(
+        //   label:"First Payment Details",
+        //   onChanged:(v){
+        //     userDetails["firstpaymentdtails"]=v;
+        //   },
+        // ),
 
-        const SizedBox(height:20),
+        // const SizedBox(height:20),
 
         /// SECOND PAYMENT MODE
-        DropdownButtonFormField<String>(
-          value:userDetails["secondpaymentmode"]==""?null:userDetails["secondpaymentmode"],
+        // DropdownButtonFormField<String>(
+        //   value:userDetails["secondpaymentmode"]==""?null:userDetails["secondpaymentmode"],
 
-          items: const [
+        //   items: const [
 
-            DropdownMenuItem(value:"cash",child:Text("Cash")),
-            DropdownMenuItem(value:"upi",child:Text("UPI")),
-            DropdownMenuItem(value:"card",child:Text("Card")),
-            DropdownMenuItem(value:"banktransfer",child:Text("Bank Transfer")),
+        //     DropdownMenuItem(value:"cash",child:Text("Cash")),
+        //     DropdownMenuItem(value:"upi",child:Text("UPI")),
+        //     DropdownMenuItem(value:"card",child:Text("Card")),
+        //     DropdownMenuItem(value:"banktransfer",child:Text("Bank Transfer")),
 
-          ],
+        //   ],
 
-          decoration:_dropdownDecoration("Second Payment Mode"),
+        //   decoration:_dropdownDecoration("Second Payment Mode"),
 
-          onChanged:(v){
-            setState(()=>userDetails["secondpaymentmode"]=v);
-          },
-        ),
+        //   onChanged:(v){
+        //     setState(()=>userDetails["secondpaymentmode"]=v);
+        //   },
+        // ),
 
-        const SizedBox(height:16),
+        // const SizedBox(height:16),
 
-        _premiumInput(
-          label:"Second Payment Details",
-          onChanged:(v){
-            userDetails["secondpaymentdetails"]=v;
-          },
-        ),
+        // _premiumInput(
+        //   label:"Second Payment Details",
+        //   onChanged:(v){
+        //     userDetails["secondpaymentdetails"]=v;
+        //   },
+        // ),
 
-        const SizedBox(height:20),
+        // const SizedBox(height:20),
 
         /// SPECIAL NOTE
         _premiumInput(
@@ -3150,7 +3150,12 @@ void handleDeleteProduct(String productCode){
 
 }
 Future<void> handleConfirmPayment() async {
-
+userDetails["amountpaid"] = 0;
+  userDetails["paymentstatus"] = "pending";
+  userDetails["firstpaymentmode"] = "";
+  userDetails["firstpaymentdtails"] = "";
+  userDetails["secondpaymentmode"] = "";
+  userDetails["secondpaymentdetails"] = "";
   calculateTotals();
 
   setState(() {
