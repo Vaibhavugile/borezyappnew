@@ -155,7 +155,39 @@ void openWhatsAppTemplates(BuildContext context, String receiptNumber) {
       ),
     );
   }
+String getStageLabel(String stage){
 
+  switch(stage){
+
+    case "Booking":
+      return "BOOKING";
+
+    case "pickupPending":
+      return "PICKUP PENDING";
+
+    case "pickup":
+      return "PICKED UP";
+
+    case "returnPending":
+      return "RETURN PENDING";
+
+    case "return":
+      return "RETURNED";
+
+    case "successful":
+      return "SUCCESSFUL";
+
+    case "cancelled":
+      return "CANCELLED";
+
+    case "postponed":
+      return "POSTPONED";
+
+    default:
+      return stage.toUpperCase();
+  }
+
+}
  Widget bookingCard(var doc) {
 
   final provider =
@@ -383,7 +415,7 @@ void openWhatsAppTemplates(BuildContext context, String receiptNumber) {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      stage,
+                        getStageLabel(stage),
                       style: TextStyle(
                         fontSize:11,
                         fontWeight: FontWeight.w600,

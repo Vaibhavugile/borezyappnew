@@ -56,17 +56,10 @@ String customerName = provider.customerDetails?["name"] ?? "";
       );
     }
 
-    return WillPopScope(
-
+   return WillPopScope(
   onWillPop: () async {
 
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const MainScreen(initialIndex: 2),
-      ),
-      (route) => false,
-    );
+    Navigator.pop(context);
 
     return false;
   },
@@ -76,6 +69,12 @@ String customerName = provider.customerDetails?["name"] ?? "";
       backgroundColor: const Color(0xFFFBF9F8),
 
       appBar: AppBar(
+        leading: IconButton(
+  icon: const Icon(Icons.arrow_back),
+  onPressed: () {
+    Navigator.pop(context);
+  },
+),
 
        title: Text("Receipt ${widget.receiptNumber}"),
 
@@ -187,7 +186,36 @@ String customerName = provider.customerDetails?["name"] ?? "";
     ),
     );  
   }
+String getStageLabel(String stage) {
 
+  switch(stage){
+
+    case "Booking":
+      return "BOOKING";
+
+    case "pickupPending":
+      return "PICKUP PENDING";
+
+    case "pickup":
+      return "PICKED UP";
+
+    case "returnPending":
+      return "RETURN PENDING";
+
+    case "return":
+      return "RETURNED";
+
+    case "successful":
+      return "SUCCESSFUL";
+
+    case "cancelled":
+      return "CANCELLED";
+
+    default:
+      return stage.toUpperCase();
+  }
+
+}
   /// STAGE BADGE
  Widget _stageBadge(String stage){
 
@@ -235,7 +263,7 @@ String customerName = provider.customerDetails?["name"] ?? "";
       border: Border.all(color: color.withOpacity(.35)),
     ),
     child: Text(
-      stage,
+      getStageLabel(stage),
       style: TextStyle(
         color: color,
         fontWeight: FontWeight.w700,

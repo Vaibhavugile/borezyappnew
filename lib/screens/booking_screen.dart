@@ -2894,7 +2894,7 @@ Future<void> handleBookingConfirmation() async {
     }
 
     List<Map<String, dynamic>> bookingDetails = [];
-
+String branchCode = getBranchCode();
     for (var product in products) {
 
       DateTime pickupDateObj = product["pickupDate"];
@@ -2908,7 +2908,6 @@ Future<void> handleBookingConfirmation() async {
           .ceil();
 
       /// 🔥 BRANCH CODE (same as web)
-    String branchCode = getBranchCode();// later replace with userData.branchCode
 
       var productRef = FirebaseFirestore.instance
           .collection("products")
@@ -3019,7 +3018,7 @@ int extraRent =
       );
 
       /// 🔥 SAME bookingId logic as web
-      await getNextBookingId(pickupDateObj, product["productCode"]);
+      // await getNextBookingId(pickupDateObj, product["productCode"]);
 
       bookingDetails.add({
 
@@ -3176,9 +3175,25 @@ userDetails["amountpaid"] = 0;
 
     /// GENERATE RECEIPT NUMBER
     String receiptNumber = await generateReceiptNumber(branchCode);
+    List productDocs = await Future.wait(
+  products.map((product) {
 
+    var ref = FirebaseFirestore.instance
+        .collection("products")
+        .doc(branchCode)
+        .collection("products")
+        .doc(product["productCode"]);
+
+    return ref.get();
+
+  })
+);
+     WriteBatch batch = FirebaseFirestore.instance.batch();
     /// STOCK VALIDATION
-    for (var product in products) {
+    for (int i = 0; i < products.length; i++) {
+
+  var product = products[i];
+  var productDoc = productDocs[i];
 
       int availableQuantity =
           int.tryParse(product["availableQuantity"].toString()) ?? 0;
@@ -3205,7 +3220,10 @@ userDetails["amountpaid"] = 0;
     }
 
     /// CREATE BOOKINGS
-    for (var product in products) {
+    for (int i = 0; i < products.length; i++) {
+
+  var product = products[i];
+  var productDoc = productDocs[i];
 
       DateTime pickupDateObj = product["pickupDate"];
       DateTime returnDateObj = product["returnDate"];
@@ -3216,7 +3234,6 @@ userDetails["amountpaid"] = 0;
           .collection("products")
           .doc(product["productCode"]);
 
-      var productDoc = await productRef.get();
       if (!productDoc.exists) continue;
 
       var productData = productDoc.data();
@@ -3233,7 +3250,9 @@ userDetails["amountpaid"] = 0;
       int bookingId =
           await getNextBookingId(pickupDateObj, product["productCode"]) ?? 1;
 
-      await productRef.collection("bookings").add({
+      var bookingRef = productRef.collection("bookings").doc();
+
+batch.set(bookingRef, {
 
         "bookingId": bookingId,
         "receiptNumber": receiptNumber,
@@ -3257,6 +3276,7 @@ userDetails["amountpaid"] = 0;
 
       });
     }
+    await batch.commit();
 
     /// PAYMENT CALCULATION (FIXED TYPES)
 
