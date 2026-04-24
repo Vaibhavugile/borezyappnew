@@ -120,7 +120,7 @@ returnPendingDocs = returnPendingSnap.docs;
     for (var doc in createdSnap.docs) {
       var data = doc.data();
 
-      if (data["bookingStage"] == "cancelled") continue;
+      if (data["bookingStage"] == "cancelled" || data["bookingStage"] == "postponed") continue;
 
       createdDocs.add(doc);
       createdCount++;
@@ -132,7 +132,7 @@ returnPendingDocs = returnPendingSnap.docs;
     for (var doc in pickupSnap.docs) {
       var data = doc.data();
 
-      if (data["bookingStage"] == "cancelled") continue;
+      if (data["bookingStage"] == "cancelled" || data["bookingStage"] == "postponed") continue;
 
       pickupDocs.add(doc);
       pickupTotal++;
@@ -148,7 +148,7 @@ returnPendingDocs = returnPendingSnap.docs;
     for (var doc in returnSnap.docs) {
       var data = doc.data();
 
-      if (data["bookingStage"] == "cancelled") continue;
+      if (data["bookingStage"] == "cancelled" || data["bookingStage"] == "postponed") continue;
 
       returnDocs.add(doc);
       returnTotal++;

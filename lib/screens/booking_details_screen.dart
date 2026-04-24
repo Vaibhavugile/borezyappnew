@@ -647,9 +647,23 @@ if (img is List && img.isNotEmpty) {
         const Divider(),
 
         /// TOTAL
-        _infoRow("Amount To Be Paid", "₹${payment["totalAmount"] ?? 0}"),
-        _infoRow("Amount Paid", "₹${payment["amountPaid"] ?? 0}"),
-        _infoRow("Balance", "₹${payment["balance"] ?? 0}"),
+       _infoRow(
+  "Amount To Be Paid",
+  "₹${payment["totalAmount"] ?? 0}",
+  valueColor: Colors.orange,
+),
+
+_infoRow(
+  "Amount Paid",
+  "₹${payment["amountPaid"] ?? 0}",
+  valueColor: Colors.green,
+),
+
+_infoRow(
+  "Balance",
+  "₹${payment["balance"] ?? 0}",
+  valueColor: Colors.red,
+),
 
         // const Divider(),
 
@@ -885,36 +899,40 @@ child: Column(
   }
 
   /// SAFE ROW (FIXES OVERFLOW)
-  Widget _infoRow(String label, dynamic value){
+ Widget _infoRow(String label, dynamic value, {Color? valueColor}) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 10),
+    child: Row(
+      children: [
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom:10),
-
-      child: Row(
-
-        children: [
-
-          Expanded(
-            flex:4,
-            child: Text(
-              label,
-              style: const TextStyle(color: Colors.grey),
+        Expanded(
+          flex: 4,
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Colors.grey,
+              fontSize: 14,
             ),
           ),
+        ),
 
-          Expanded(
-            flex:6,
-            child: Text(
-              value?.toString() ?? "-",
-              textAlign: TextAlign.right,
-              style: const TextStyle(fontWeight: FontWeight.w600),
+        Expanded(
+          flex: 6,
+          child: Text(
+            value?.toString() ?? "-",
+            textAlign: TextAlign.right,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 15,
+              color: valueColor ?? Colors.black,
             ),
-          )
+          ),
+        ),
 
-        ],
-      ),
-    );
-  }
+      ],
+    ),
+  );
+}
  void _openTemplateModal(BuildContext context) {
 
   var provider = Provider.of<BookingDetailsProvider>(context, listen:false);
