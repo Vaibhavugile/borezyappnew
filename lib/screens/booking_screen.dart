@@ -310,13 +310,21 @@ Widget buildProductsStep() {
                         lastDate: DateTime(2030),
                       );
 
-                      if(pickedDate != null){
+                     if(pickedDate != null){
 
-                        setState(() {
-                          products[index]["pickupDate"] = getFixedPickupTime(pickedDate);
-                        });
+  setState(() {
 
-                      }
+    DateTime newPickup = getFixedPickupTime(pickedDate);
+
+    products[index]["pickupDate"] = newPickup;
+
+    /// AUTO UPDATE RETURN DATE (+2 DAYS)
+    products[index]["returnDate"] =
+        getFixedReturnTime(newPickup.add(const Duration(days: 2)));
+
+  });
+
+}
 
                     },
                   ),
@@ -430,32 +438,23 @@ Widget buildProductsStep() {
                             ],
                           ),
 
-                          child: ListView(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            children: productSuggestions.map((suggestion){
+                          child: Column(
+  children: productSuggestions.map((suggestion){
 
-                              return ListTile(
+    return ListTile(
+      dense: true,
+      title: Text(
+        suggestion["productCode"],
+        style: const TextStyle(fontWeight: FontWeight.w600),
+      ),
+      subtitle: Text(suggestion["productName"]),
+      onTap: (){
+        handleSuggestionClick(index, suggestion);
+      },
+    );
 
-                                title: Text(
-                                  suggestion["productCode"],
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600
-                                  ),
-                                ),
-
-                                subtitle: Text(
-                                  suggestion["productName"],
-                                ),
-
-                                onTap: (){
-                                  handleSuggestionClick(index, suggestion);
-                                },
-
-                              );
-
-                            }).toList(),
-                          ),
+  }).toList(),
+),
                         ),
 
                     ],
