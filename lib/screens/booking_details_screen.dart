@@ -38,7 +38,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
 
 var provider = Provider.of<BookingDetailsProvider>(context);
 final userProvider = Provider.of<UserProvider>(context);
-String userName = userProvider.userData?["name"] ?? "";
+String userName = userProvider.userName ?? "Admin";
 String customerName = provider.customerDetails?["name"] ?? "";
     if(provider.loading){
       return const Scaffold(
@@ -425,8 +425,10 @@ String getStageLabel(String stage) {
 
               onPressed: () async {
 
-                provider.userName =
-                    provider.customerDetails?["receiptby"] ?? "Admin";
+                final userProvider =
+      Provider.of<UserProvider>(context, listen:false);
+
+ provider.userName = userProvider.userName ?? "Admin";
 
                 await provider.handleSaveSecondPayment();
                 // await provider.fetchDetails();
@@ -696,7 +698,7 @@ _infoRow(
         // const Divider(),
 
         /// PAYMENT MODES
-        _infoRow("Payment Status", payment["paymentStatus"]),
+        // _infoRow("Payment Status", payment["paymentStatus"]),
         // _infoRow("First Payment Mode", payment["firstPaymentMode"]),
         // _infoRow("First Payment Details", payment["firstPaymentDetails"]),
         // _infoRow("Second Payment Mode", payment["secondPaymentMode"]),
@@ -1242,7 +1244,7 @@ void showAddPaymentModal(BuildContext context) {
   final userProvider =
       Provider.of<UserProvider>(context, listen:false);
 
-  String userName = userProvider.userData?["name"] ?? "";
+String userName = userProvider.userName ?? "Admin";
   String customerName = provider.customerDetails?["name"] ?? "";
 
   TextEditingController amountController = TextEditingController();
@@ -1400,7 +1402,7 @@ void showRefundModal(BuildContext context){
   final userProvider =
       Provider.of<UserProvider>(context, listen:false);
 
-  String userName = userProvider.userData?["name"] ?? "";
+String userName = userProvider.userName ?? "Admin";
   String customerName = provider.customerDetails?["name"] ?? "";
 
   TextEditingController amountController = TextEditingController();

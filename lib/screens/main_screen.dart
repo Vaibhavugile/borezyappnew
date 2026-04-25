@@ -27,8 +27,8 @@ void initState() {
 }
   final List pages = [
     const DashboardScreen(),
-    const BookingListScreen(),
     const Booking(),
+    const BookingListScreen(),
     const AddProductScreen(),
     const Placeholder(),
   ];
