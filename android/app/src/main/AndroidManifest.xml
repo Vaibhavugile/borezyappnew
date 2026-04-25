@@ -3,12 +3,19 @@
     <!-- INTERNET -->
     <uses-permission android:name="android.permission.INTERNET"/>
 
-    <!-- CAMERA PERMISSION -->
+    <!-- CAMERA -->
     <uses-permission android:name="android.permission.CAMERA"/>
 
-    <!-- STORAGE PERMISSIONS -->
+    <!-- STORAGE -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+
+    <!-- LOCATION PERMISSIONS (FOR ATTENDANCE GPS) -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+
+    <!-- GPS FEATURE -->
+    <uses-feature android:name="android.hardware.location.gps"/>
 
     <!-- REQUIRED FOR WHATSAPP / URL LAUNCHER -->
     <queries>

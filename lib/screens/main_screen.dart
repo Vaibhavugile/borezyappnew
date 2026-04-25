@@ -3,6 +3,7 @@ import 'dashboard_screen.dart';
 import 'booking_screen.dart';
 import 'booking_list_screen.dart';
 import 'add_product_screen.dart';
+import'attendance_screen.dart';
 class MainScreen extends StatefulWidget {
 
   final int initialIndex;
@@ -30,7 +31,7 @@ void initState() {
     const Booking(),
     const BookingListScreen(),
     const AddProductScreen(),
-    const Placeholder(),
+    const AttendanceScreen(),
   ];
 
   @override
@@ -96,7 +97,7 @@ child: Scaffold(
 
       BottomNavigationBarItem(
         icon: Icon(Icons.bar_chart_outlined),
-        label: "Reports",
+        label: "Attendannce",
       ),
 
     ],

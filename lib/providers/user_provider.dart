@@ -8,8 +8,7 @@ class UserProvider extends ChangeNotifier {
   String? get branchCode => _userData?['branchCode']; // Access the branchCode from user data
     String? get userName => _userData?['name'];
   String? get role => _userData?['role'];
-  String? get userId => _userData?['uid'];
-
+String? get userId => _userData?['userId'];
 
   void setUserData(Map<String, dynamic> data) {
     _userData = data;
