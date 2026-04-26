@@ -23,11 +23,61 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   double? distance;
   double? userLat;
   double? userLng;
-
+String status = "Loading";
+String? checkInTime;
+String? checkOutTime;
   String getTodayId() {
     DateTime now = DateTime.now();
     return "${now.year}-${now.month}-${now.day}";
   }
+  Future<void> loadTodayAttendance() async {
+
+  final userProvider =
+      Provider.of<UserProvider>(context, listen: false);
+
+  String userId = userProvider.userId ?? "";
+
+  String todayId = getTodayId();
+
+  var doc = await FirebaseFirestore.instance
+      .collection("attendance")
+      .doc(userId)
+      .collection("logs")
+      .doc(todayId)
+      .get();
+
+  if (!doc.exists) {
+    setState(() {
+      status = "Not Checked In";
+      checkInTime = null;
+      checkOutTime = null;
+    });
+    return;
+  }
+
+  var data = doc.data();
+
+  Timestamp? checkIn = data?["checkInTime"];
+  Timestamp? checkOut = data?["checkOutTime"];
+
+  if (checkIn != null) {
+    checkInTime =
+        TimeOfDay.fromDateTime(checkIn.toDate()).format(context);
+  }
+
+  if (checkOut != null) {
+    checkOutTime =
+        TimeOfDay.fromDateTime(checkOut.toDate()).format(context);
+  }
+
+  if (checkIn != null && checkOut == null) {
+    status = "Checked In";
+  } else if (checkIn != null && checkOut != null) {
+    status = "Completed";
+  }
+
+  setState(() {});
+}
 
   /// CHECK LOCATION
   Future<void> checkLocation() async {
@@ -332,104 +382,227 @@ Future<void> checkOut() async {
 }
 
   @override
-  Widget build(BuildContext context) {
+Widget build(BuildContext context) {
 
-    return Scaffold(
+  final theme = Theme.of(context);
 
-      appBar: AppBar(
-        title: const Text("Attendance"),
-      ),
+  return Scaffold(
+    backgroundColor: const Color(0xFFF4F6FA),
 
-      body: Padding(
-        padding: const EdgeInsets.all(20),
+    body: SafeArea(
+      child: Column(
+        children: [
 
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(12),
-              ),
-
-              child: Column(
-                children: [
-
-                  const Icon(
-                    Icons.location_on,
-                    size: 50,
-                    color: Colors.red,
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  Text(
-                    message,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 16),
-                  ),
-
+          /// HEADER
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(24),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFF4F46E5),
+                  Color(0xFF6366F1),
                 ],
               ),
-            ),
-
-            const SizedBox(height: 30),
-
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-
-                onPressed: loading ? null : checkLocation,
-
-                child: loading
-                    ? const CircularProgressIndicator(
-                        color: Colors.white)
-                    : const Text("Check Location"),
-
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(24),
+                bottomRight: Radius.circular(24),
               ),
             ),
 
-            const SizedBox(height: 15),
+            child: Column(
+              children: [
 
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
+                const SizedBox(height: 10),
 
-                onPressed: checkIn,
-
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
+                const Text(
+                  "Attendance",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
 
-                child: const Text("Check In"),
+                const SizedBox(height: 10),
 
-              ),
-            ),
-
-            const SizedBox(height: 15),
-
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-
-                onPressed: checkOut,
-
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
+                Text(
+                  DateTime.now().toString().split(" ")[0],
+                  style: const TextStyle(
+                    color: Colors.white70,
+                  ),
                 ),
 
-                child: const Text("Check Out"),
+                const SizedBox(height: 10),
 
-              ),
+              ],
             ),
+          ),
 
-          ],
-        ),
+          const SizedBox(height: 30),
+
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+
+            child: Column(
+              children: [
+
+                /// STATUS CARD
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(.05),
+                        blurRadius: 12,
+                      )
+                    ],
+                  ),
+
+                  child: Column(
+                    children: [
+
+                      Icon(
+                        Icons.location_on,
+                        color: theme.primaryColor,
+                        size: 40,
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      const Text(
+                        "Location Status",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      Text(
+                        message,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 14),
+                      ),
+
+                      if(distance != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          "Distance: ${distance!.toStringAsFixed(1)} m",
+                          style: const TextStyle(
+                            color: Colors.grey,
+                          ),
+                        )
+                      ]
+
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 40),
+
+                /// CHECK IN BUTTON
+                SizedBox(
+                  width: double.infinity,
+                  height: 55,
+
+                  child: ElevatedButton(
+
+                    onPressed: loading ? null : () async {
+
+                      await checkLocation();
+
+                      if(distance != null &&
+                          message.contains("Inside office")){
+
+                        await checkIn();
+
+                      }
+
+                    },
+
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+
+                    child: loading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                            "CHECK IN",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                  ),
+                ),
+
+                const SizedBox(height: 15),
+
+                /// CHECK OUT BUTTON
+                SizedBox(
+                  width: double.infinity,
+                  height: 55,
+
+                  child: ElevatedButton(
+
+                    onPressed: loading ? null : () async {
+
+                      await checkLocation();
+
+                      if(distance != null &&
+                          message.contains("Inside office")){
+
+                        await checkOut();
+
+                      }
+
+                    },
+
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+
+                    child: loading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                            "CHECK OUT",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                  ),
+                ),
+
+                const SizedBox(height: 40),
+
+                Text(
+                  "Location verification required for attendance",
+                  style: TextStyle(
+                    color: Colors.grey.shade600,
+                    fontSize: 13,
+                  ),
+                ),
+
+              ],
+            ),
+          )
+
+        ],
       ),
-
-    );
-
-  }
+    ),
+  );
+}
 }
