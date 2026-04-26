@@ -132,7 +132,10 @@ String customerName = provider.customerDetails?["name"] ?? "";
             const SizedBox(height:18),
 
             _accountSummary(payment),
-            const SizedBox(height:18),
+const SizedBox(height:18),
+
+_activityLog(provider.activityLogs),
+const SizedBox(height:18),
 
        
 
@@ -296,6 +299,7 @@ String getStageLabel(String stage) {
           _infoRow("Customer By", user["customerby"]),
           _infoRow("Receipt By", user["receiptby"]),
           _infoRow("Alterations", user["alterations"]),
+           _infoRow("Special Note", user["specialnote"]),
         ],
       ),
     );
@@ -329,7 +333,7 @@ String getStageLabel(String stage) {
                 onPressed: (){
                   setState(() {
                     isEditing = true;
-                    specialNoteController.text = provider.specialNote;
+                    // specialNoteController.text = provider.specialNote;
                   });
                 },
               )
@@ -590,11 +594,12 @@ if (img is List && img.isNotEmpty) {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-
-                      Text(
-                        data["productName"] ?? "-",
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
+Text(
+  data["product"]?["productName"] ?? "-",
+  style: const TextStyle(
+    fontWeight: FontWeight.w600,
+  ),
+),
 
                       const SizedBox(height:4),
 
@@ -912,6 +917,69 @@ child: Column(
 
       ],
     ),
+  );
+}
+Widget _activityLog(List logs) {
+
+  return _cardWrapper(
+
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+
+        const Text(
+          "Activity Log",
+          style: TextStyle(fontSize:18,fontWeight: FontWeight.w600),
+        ),
+
+        const SizedBox(height:16),
+
+        if(logs.isEmpty)
+          const Text("No activity recorded"),
+
+        ...logs.reversed.map((log){
+
+          return Container(
+
+            margin: const EdgeInsets.only(bottom:12),
+            padding: const EdgeInsets.all(14),
+
+            decoration: BoxDecoration(
+              color: const Color(0xFFF6F3F2),
+              borderRadius: BorderRadius.circular(14),
+            ),
+
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+
+                Text(
+                  log["action"] ?? "",
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+
+                const SizedBox(height:6),
+
+                Text(
+                  log["timestamp"] ?? "",
+                  style: const TextStyle(
+                    fontSize:12,
+                    color: Colors.grey,
+                  ),
+                ),
+
+              ],
+            ),
+
+          );
+
+        }).toList()
+
+      ],
+    ),
+
   );
 }
 

@@ -20,6 +20,7 @@ List<Map<String, dynamic>> bookings = [];
 
   /// TRANSACTIONS
   List<QueryDocumentSnapshot> transactions = [];
+  List<dynamic> activityLogs = [];
 
   /// WHATSAPP TEMPLATES
   List<QueryDocumentSnapshot> templates = [];
@@ -68,12 +69,14 @@ for (var doc in productsSnap.docs) {
     .get();
 
 List<Map<String, dynamic>> bookingList = [];
+
 if (bookingSnap.docs.isNotEmpty) {
 
   Map<String, dynamic> first =
       bookingSnap.docs.first.data() as Map<String, dynamic>;
 
   customerDetails = first["userDetails"] ?? {};
+    specialNote = customerDetails?["specialnote"] ?? "";
 }
 productCodes = [];
 totalProducts = 0;
@@ -106,6 +109,9 @@ for (var doc in bookingSnap.docs) {
 }
 
 bookings = bookingList;
+if (bookingList.isNotEmpty) {
+  activityLogs = bookingList.first["activityLog"] ?? [];
+}
 
      
 
@@ -312,7 +318,7 @@ List<Map<String, dynamic>> productsList = bookings.map((doc) {
 
     return {
       "productCode": data["productCode"] ?? "",
-      "productName": data["productName"] ?? "",
+      "productName": data["product"]?["productName"] ?? "",
       "quantity": data["quantity"] ?? ""
     };
 

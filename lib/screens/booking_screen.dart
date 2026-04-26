@@ -114,6 +114,7 @@ Map receipt = {};
   List productSuggestions = [];
   int? activeProductIndex;
   List<TextEditingController> productControllers = [];
+  TextEditingController specialNoteController = TextEditingController();
 double availableCredit = 0;
 String? creditNoteId;
 double appliedCredit = 0;
@@ -1140,6 +1141,8 @@ Widget buildCustomerStep() {
 
           /// ALTERNATIVE PHONE
           TextField(
+            keyboardType: TextInputType.phone,
+            maxLength: 10,
             decoration: InputDecoration(
               labelText: "Alternative Phone",
               hintText: "Optional",
@@ -1726,6 +1729,7 @@ Widget buildReviewStep() {
 
   setState(() {
   wizardStep = 4;
+  specialNoteController.clear();
 });
 
 _scrollController.jumpTo(0);
@@ -2135,13 +2139,16 @@ Widget buildPaymentStep() {
         // const SizedBox(height:20),
 
         /// SPECIAL NOTE
-        _premiumInput(
-          label:"Special Notes",
-          maxLines:3,
-          onChanged:(v){
-            setState(()=>userDetails["specialnote"]=v);
-          },
-        ),
+       _premiumInput(
+  label: "Special Notes",
+  controller: specialNoteController,
+  maxLines: 3,
+  onChanged: (v) {
+    setState(() {
+      userDetails["specialnote"] = v;
+    });
+  },
+),
 
         const SizedBox(height:30),
 
@@ -2203,11 +2210,13 @@ Widget buildPaymentStep() {
 Widget _premiumInput({
   required String label,
   required Function(String) onChanged,
+  TextEditingController? controller,
   int maxLines = 1,
   TextInputType keyboardType = TextInputType.text,
-}) {
+}){
 
   return TextField(
+  controller: controller,
     maxLines: maxLines,
     keyboardType: keyboardType,
 
