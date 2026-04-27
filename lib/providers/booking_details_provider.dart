@@ -375,15 +375,15 @@ List<Map<String, dynamic>> productsList = bookings.map((doc) {
               ? createdAt.toDate().toString().split(" ")[0]
               : '')
       .replaceAll(
-          '{pickupDate}',
-          pickupDate != null
-              ? pickupDate.toDate().toString().split(" ")[0]
-              : '')
-      .replaceAll(
-          '{returnDate}',
-          returnDate != null
-              ? returnDate.toDate().toString().split(" ")[0]
-              : '')
+    '{pickupDate}',
+    pickupDate != null
+        ? "${pickupDate.toDate().day}-${pickupDate.toDate().month}-${pickupDate.toDate().year}"
+        : '')
+.replaceAll(
+    '{returnDate}',
+    returnDate != null
+        ? "${returnDate.toDate().day}-${returnDate.toDate().month}-${returnDate.toDate().year}"
+        : '')
 
       /// BASIC INFO
       .replaceAll('{receiptNumber}', receiptNumber)

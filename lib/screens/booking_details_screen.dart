@@ -57,12 +57,18 @@ String customerName = provider.customerDetails?["name"] ?? "";
     }
 
    return WillPopScope(
-  onWillPop: () async {
+onWillPop: () async {
 
-    Navigator.pop(context);
+  Navigator.pushAndRemoveUntil(
+    context,
+    MaterialPageRoute(
+      builder: (_) => const MainScreen(initialIndex: 2),
+    ),
+    (route) => false,
+  );
 
-    return false;
-  },
+  return false;
+},
 
   child: Scaffold(
 
@@ -71,9 +77,15 @@ String customerName = provider.customerDetails?["name"] ?? "";
       appBar: AppBar(
         leading: IconButton(
   icon: const Icon(Icons.arrow_back),
-  onPressed: () {
-    Navigator.pop(context);
-  },
+ onPressed: () {
+  Navigator.pushAndRemoveUntil(
+    context,
+    MaterialPageRoute(
+      builder: (_) => const MainScreen(initialIndex: 2),
+    ),
+    (route) => false,
+  );
+},
 ),
 
        title: Text("Receipt ${widget.receiptNumber}"),
@@ -333,6 +345,7 @@ String getStageLabel(String stage) {
                 onPressed: (){
                   setState(() {
                     isEditing = true;
+                     specialNoteController.clear();  
                     // specialNoteController.text = provider.specialNote;
                   });
                 },
