@@ -1,4 +1,4 @@
-package com.example.borezy
+package com.borezy.app
 
 import io.flutter.embedding.android.FlutterActivity
 

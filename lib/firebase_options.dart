@@ -68,7 +68,7 @@ class DefaultFirebaseOptions {
     databaseURL: 'https://renting-wala-27d06-default-rtdb.firebaseio.com',
     storageBucket: 'renting-wala-27d06.appspot.com',
     iosClientId: '914352196749-o5j8vlo39knclg8ob6g3j6qh8nda5iaq.apps.googleusercontent.com',
-    iosBundleId: 'com.example.borezy',
+    iosBundleId: 'com.borezy.app',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
@@ -79,7 +79,7 @@ class DefaultFirebaseOptions {
     databaseURL: 'https://renting-wala-27d06-default-rtdb.firebaseio.com',
     storageBucket: 'renting-wala-27d06.appspot.com',
     iosClientId: '914352196749-o5j8vlo39knclg8ob6g3j6qh8nda5iaq.apps.googleusercontent.com',
-    iosBundleId: 'com.example.borezy',
+    iosBundleId: 'com.borezy.app',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(

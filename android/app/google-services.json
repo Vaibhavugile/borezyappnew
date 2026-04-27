@@ -8,6 +8,42 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:914352196749:android:efea833562d1e6bff866c4",
+        "android_client_info": {
+          "package_name": "com.borezy.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "914352196749-9bokch2ekh86dd9fkdrigmv076vvo7pi.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCQduY28OYEnsvlmPVEakcufVeH8KBDBOQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "914352196749-9bokch2ekh86dd9fkdrigmv076vvo7pi.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "914352196749-o5j8vlo39knclg8ob6g3j6qh8nda5iaq.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.borezy"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:914352196749:android:ee37314f98f2d15af866c4",
         "android_client_info": {
           "package_name": "com.example.borezy"
