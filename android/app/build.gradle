@@ -34,7 +34,7 @@ jvmTarget = '17'    }
     }
 
     defaultConfig {
-        applicationId "com.example.borezy"
+        applicationId "com.borezy.app"
         minSdkVersion flutter.minSdkVersion
         targetSdkVersion flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
