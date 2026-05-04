@@ -3335,6 +3335,46 @@ batch.set(bookingRef, {
         .doc(receiptNumber);
 
     List reviewProducts = receipt["products"] ?? [];
+    List<Map<String, dynamic>> productsSnapshot = [];
+
+for (int i = 0; i < products.length; i++) {
+
+  var product = products[i];
+  var productDoc = productDocs[i];
+
+  if (!productDoc.exists) continue;
+
+  var productData = productDoc.data();
+
+  String imageUrl = "";
+
+  if (productData?["imageUrls"] is List &&
+      (productData?["imageUrls"] as List).isNotEmpty) {
+    imageUrl = productData?["imageUrls"][0];
+  }
+
+  productsSnapshot.add({
+
+    "productId": product["productCode"],
+
+    "productCode": product["productCode"],
+    "productName": productData?["productName"] ?? "",
+
+    "imageUrl": imageUrl,
+
+    "quantity": int.tryParse(product["quantity"].toString()) ?? 0,
+
+    "price": int.tryParse((productData?["price"] ?? "0").toString()) ?? 0,
+    "deposit": int.tryParse((productData?["deposit"] ?? "0").toString()) ?? 0,
+
+    "totalCost": int.tryParse((product["totalCost"] ?? "0").toString()) ?? 0,
+
+    "pickupDate": product["pickupDate"],
+    "returnDate": product["returnDate"]
+
+  });
+
+}
 
     await paymentRef.set({
 
@@ -3395,7 +3435,7 @@ batch.set(bookingRef, {
 
       "depositReturned": depositReturned,
       "depositWithYou": depositWithYou,
-
+"products": productsSnapshot,
       "productsSummary": reviewProducts.map((p) => {
 
         "productCode": p["productCode"],

@@ -9,7 +9,7 @@ import 'screens/main_screen.dart';
 
 import 'providers/user_provider.dart';
 import 'providers/dashboard_provider.dart';   // NEW
-
+import 'screens/gate_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -144,7 +144,7 @@ class MyApp extends StatelessWidget {
         ),
 
         /// START SCREEN
-        home: LoginScreen(),
+        home: const GateScreen(),
       ),
     );
   }

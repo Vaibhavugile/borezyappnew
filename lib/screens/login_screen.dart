@@ -12,6 +12,7 @@ import 'branch_dashboard.dart';
 import 'subuser_dashboard.dart';
 import '../providers/user_provider.dart';
 import 'main_screen.dart';
+import 'gate_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -59,9 +60,9 @@ class _LoginScreenState extends State<LoginScreen> {
         if (role == 'admin') {
           Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => AdminScreen()));
         } else if (role == 'subuser') {
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MainScreen()));
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) =>  GateScreen()));
         } else {
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MainScreen()));
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) =>  GateScreen()));
         }
       } else {
         setState(() => _error = 'Offline: Invalid credentials or no cached user data.');
@@ -98,6 +99,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final branches = await firestore.collection('branches').where('emailId', isEqualTo: email).get();
       if (branches.docs.isNotEmpty) {
         final data = branches.docs.first.data();
+          data['userId'] = user.uid;   // 🔥 ADD THIS
         final now = DateTime.now();
         if (now.isBefore(DateTime.parse(formatDate(data['activeDate'])))) {
           setState(() => _error = 'Branch plan not active yet.');
@@ -111,7 +113,7 @@ class _LoginScreenState extends State<LoginScreen> {
         data['role'] = 'branch';
         Provider.of<UserProvider>(context, listen: false).setUserData(data);
         hiveBox.put(email, data);
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MainScreen()));
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) =>  GateScreen()));
         return;
       }
 
@@ -120,6 +122,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (subusers.docs.isNotEmpty) {
         final data = subusers.docs.first.data();
+        data['userId'] = user.uid;   // FIX
         print('Subuser data: $data');
 
         if (data['isActive'] != true) {
@@ -158,7 +161,7 @@ class _LoginScreenState extends State<LoginScreen> {
         Provider.of<UserProvider>(context, listen: false).setUserData(data);
         hiveBox.put(email, data);
         print('Navigating to MainScreen');
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MainScreen()));
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) =>  GateScreen()));
         return;
       }
 

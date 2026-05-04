@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/dashboard_provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../providers/user_provider.dart';
+import 'login_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -43,10 +46,36 @@ class _DashboardScreenState extends State<DashboardScreen>
           backgroundColor: const Color(0xFFF4F6FB),
 
           appBar: AppBar(
-            title: const Text("Dashboard"),
-            backgroundColor: Colors.white,
-            elevation: 0,
-          ),
+  title: const Text("Dashboard"),
+  backgroundColor: Colors.white,
+  elevation: 0,
+
+  actions: [
+
+    IconButton(
+      icon: const Icon(Icons.logout),
+      onPressed: () async {
+
+  await FirebaseAuth.instance.signOut();
+
+  Provider.of<UserProvider>(context, listen:false)
+      .clearUserData();
+
+  if (!mounted) return;
+
+  Navigator.pushAndRemoveUntil(
+    context,
+    MaterialPageRoute(
+      builder: (_) => LoginScreen(),
+    ),
+    (route) => false,
+  );
+
+}
+    )
+
+  ],
+),
 
           body: provider.loading
               ? const Center(child: CircularProgressIndicator())
