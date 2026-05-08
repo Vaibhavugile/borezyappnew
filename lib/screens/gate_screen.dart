@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/user_provider.dart';
+
 import 'login_screen.dart';
 import 'attendance_screen.dart';
 import 'main_screen.dart';
@@ -12,72 +13,94 @@ class GateScreen extends StatefulWidget {
   const GateScreen({super.key});
 
   @override
-  State<GateScreen> createState() => _GateScreenState();
+  State<GateScreen> createState() =>
+      _GateScreenState();
 }
 
-class _GateScreenState extends State<GateScreen> {
+class _GateScreenState
+    extends State<GateScreen> {
 
   @override
   void initState() {
     super.initState();
 
-    /// wait for first frame
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) {
+
       checkRoute();
+
     });
   }
 
   Future<void> checkRoute() async {
+
     try {
 
-      final authUser = FirebaseAuth.instance.currentUser;
+      /// SMALL DELAY FOR iOS STARTUP
+      await Future.delayed(
+        const Duration(milliseconds: 500),
+      );
+
+      final authUser =
+          FirebaseAuth.instance.currentUser;
 
       /// NOT LOGGED IN
       if (authUser == null) {
+
         if (!mounted) return;
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => LoginScreen()),
+          MaterialPageRoute(
+            builder: (_) =>
+                LoginScreen(),
+          ),
         );
+
         return;
       }
 
-      final firestore = FirebaseFirestore.instance;
+      final firestore =
+          FirebaseFirestore.instance;
 
-      /// GET USER FROM PROVIDER (set during login)
-      final userProvider = Provider.of<UserProvider>(context, listen: false);
-      final userData = userProvider.userData;
+      final userProvider =
+          Provider.of<UserProvider>(
+        context,
+        listen: false,
+      );
 
-      /// USER NOT FOUND IN PROVIDER
-      if (userData == null) {
-        if (!mounted) return;
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => LoginScreen()),
-        );
-        return;
-      }
+      /// OPTIONAL:
+      /// DON'T BLOCK APP IF PROVIDER EMPTY
+      final userData =
+          userProvider.userData;
 
       String userId = authUser.uid;
 
-      /// CHECK TODAY ATTENDANCE
+      /// TODAY ID
       DateTime now = DateTime.now();
-      String todayId = "${now.year}-${now.month}-${now.day}";
 
+      String todayId =
+          "${now.year}-${now.month}-${now.day}";
+
+      /// FIRESTORE TIMEOUT
       var doc = await firestore
           .collection("attendance")
           .doc(userId)
           .collection("logs")
           .doc(todayId)
-          .get();
+          .get()
+          .timeout(
+            const Duration(seconds: 15),
+          );
 
       bool checkedIn = false;
 
       if (doc.exists) {
+
         var data = doc.data();
-        checkedIn = data?["checkInTime"] != null;
+
+        checkedIn =
+            data?["checkInTime"] != null;
       }
 
       if (!mounted) return;
@@ -88,7 +111,8 @@ class _GateScreenState extends State<GateScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (_) => const AttendanceScreen(),
+            builder: (_) =>
+                const AttendanceScreen(),
           ),
         );
 
@@ -97,7 +121,8 @@ class _GateScreenState extends State<GateScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (_) => MainScreen(),
+            builder: (_) =>
+                MainScreen(),
           ),
         );
 
@@ -105,15 +130,19 @@ class _GateScreenState extends State<GateScreen> {
 
     } catch (e) {
 
+      debugPrint(
+        "GateScreen Error: $e",
+      );
+
       if (!mounted) return;
 
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => LoginScreen(),
+          builder: (_) =>
+              LoginScreen(),
         ),
       );
-
     }
   }
 
@@ -122,9 +151,9 @@ class _GateScreenState extends State<GateScreen> {
 
     return const Scaffold(
       body: Center(
-        child: CircularProgressIndicator(),
+        child:
+            CircularProgressIndicator(),
       ),
     );
-
   }
 }

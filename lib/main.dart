@@ -6,21 +6,43 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'screens/login_screen.dart';
 import 'screens/booking_screen.dart';
 import 'screens/main_screen.dart';
+import 'screens/gate_screen.dart';
 
 import 'providers/user_provider.dart';
-import 'providers/dashboard_provider.dart';   // NEW
-import 'screens/gate_screen.dart';
+import 'providers/dashboard_provider.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  /// Initialize Firebase
-  await Firebase.initializeApp();
+  try {
 
-  /// Initialize Hive
-  await Hive.initFlutter();
-  await Hive.openBox('offline_cache');
+    /// INITIALIZE FIREBASE
+    await Firebase.initializeApp();
 
-  runApp(const MyApp());
+    /// INITIALIZE HIVE
+    await Hive.initFlutter();
+    await Hive.openBox('offline_cache');
+
+    runApp(const MyApp());
+
+  } catch (e) {
+
+    debugPrint("STARTUP ERROR: $e");
+
+    runApp(
+      MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          body: Center(
+            child: Text(
+              'Startup Error: $e',
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -28,6 +50,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
     return MultiProvider(
       providers: [
 
@@ -36,36 +59,50 @@ class MyApp extends StatelessWidget {
           create: (_) => UserProvider(),
         ),
 
-        /// DASHBOARD + BOOKINGS SHARED DATA
-       ChangeNotifierProxyProvider<UserProvider, DashboardProvider>(
-  create: (_) => DashboardProvider(""),
-  update: (_, userProvider, dashboardProvider) {
+        /// DASHBOARD PROVIDER
+        ChangeNotifierProxyProvider<
+            UserProvider,
+            DashboardProvider>(
 
-    final branchCode = userProvider.branchCode ?? "";
+          create: (_) => DashboardProvider(""),
 
-    dashboardProvider!.branchCode = branchCode;
+          update: (
+            _,
+            userProvider,
+            dashboardProvider,
+          ) {
 
-    if(branchCode.isNotEmpty){
-      dashboardProvider.fetchData();
-    }
+            final branchCode =
+                userProvider.branchCode ?? "";
 
-    return dashboardProvider;
-  },
-),
+            dashboardProvider!.branchCode =
+                branchCode;
+
+            /// DO NOT CALL fetchData() HERE
+            /// THIS CAN CAUSE iOS WHITE SCREEN
+
+            return dashboardProvider;
+          },
+        ),
 
       ],
+
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
+
         title: 'Borezy',
 
         /// GLOBAL THEME
         theme: ThemeData(
 
-          scaffoldBackgroundColor: const Color(0xFFFBF9F8),
+          scaffoldBackgroundColor:
+              const Color(0xFFFBF9F8),
 
-          primaryColor: const Color(0xFF735C00),
+          primaryColor:
+              const Color(0xFF735C00),
 
-          colorScheme: const ColorScheme.light(
+          colorScheme:
+              const ColorScheme.light(
             primary: Color(0xFF735C00),
             secondary: Color(0xFFD4AF37),
             background: Color(0xFFFBF9F8),
@@ -76,10 +113,13 @@ class MyApp extends StatelessWidget {
 
           /// APPBAR
           appBarTheme: const AppBarTheme(
-            backgroundColor: Color(0xFFFBF9F8),
+            backgroundColor:
+                Color(0xFFFBF9F8),
             elevation: 0,
             centerTitle: false,
-            iconTheme: IconThemeData(color: Color(0xFF735C00)),
+            iconTheme: IconThemeData(
+              color: Color(0xFF735C00),
+            ),
             titleTextStyle: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w600,
@@ -88,15 +128,19 @@ class MyApp extends StatelessWidget {
           ),
 
           /// INPUT FIELDS
-          inputDecorationTheme: InputDecorationTheme(
+          inputDecorationTheme:
+              InputDecorationTheme(
             filled: true,
-            fillColor: const Color(0xFFF6F3F2),
-            contentPadding: const EdgeInsets.symmetric(
+            fillColor:
+                const Color(0xFFF6F3F2),
+            contentPadding:
+                const EdgeInsets.symmetric(
               vertical: 16,
               horizontal: 16,
             ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius:
+                  BorderRadius.circular(14),
               borderSide: BorderSide.none,
             ),
             hintStyle: const TextStyle(
@@ -105,17 +149,23 @@ class MyApp extends StatelessWidget {
           ),
 
           /// BUTTON STYLE
-          elevatedButtonTheme: ElevatedButtonThemeData(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1B1C1C),
+          elevatedButtonTheme:
+              ElevatedButtonThemeData(
+            style:
+                ElevatedButton.styleFrom(
+              backgroundColor:
+                  const Color(0xFF1B1C1C),
               foregroundColor: Colors.white,
               elevation: 0,
-              padding: const EdgeInsets.symmetric(
+              padding:
+                  const EdgeInsets.symmetric(
                 vertical: 16,
                 horizontal: 24,
               ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
+              shape:
+                  RoundedRectangleBorder(
+                borderRadius:
+                    BorderRadius.circular(30),
               ),
             ),
           ),
@@ -124,8 +174,10 @@ class MyApp extends StatelessWidget {
           cardTheme: CardThemeData(
             color: const Color(0xFFF6F3F2),
             elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18),
+            shape:
+                RoundedRectangleBorder(
+              borderRadius:
+                  BorderRadius.circular(18),
             ),
           ),
 

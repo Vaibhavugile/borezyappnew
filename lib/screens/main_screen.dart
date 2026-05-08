@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../providers/dashboard_provider.dart';
+
 import 'dashboard_screen.dart';
 import 'booking_screen.dart';
 import 'booking_list_screen.dart';
 import 'add_product_screen.dart';
-import'attendance_screen.dart';
+import 'attendance_screen.dart';
+
 class MainScreen extends StatefulWidget {
 
   final int initialIndex;
@@ -14,98 +19,128 @@ class MainScreen extends StatefulWidget {
   });
 
   @override
-  State<MainScreen> createState() => _MainScreenState();
+  State<MainScreen> createState() =>
+      _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _MainScreenState
+    extends State<MainScreen> {
 
-late int currentIndex;
+  late int currentIndex;
 
-@override
-void initState() {
-  super.initState();
-  currentIndex = widget.initialIndex;
-}
-  final List pages = [
+  @override
+  void initState() {
+    super.initState();
+
+    currentIndex = widget.initialIndex;
+
+    /// LOAD DASHBOARD DATA SAFELY
+    Future.microtask(() {
+
+      Provider.of<DashboardProvider>(
+        context,
+        listen: false,
+      ).fetchData();
+
+    });
+  }
+
+  final List<Widget> pages = [
+
     const DashboardScreen(),
+
     const Booking(),
+
     const BookingListScreen(),
+
     const AddProductScreen(),
+
     const AttendanceScreen(),
+
   ];
 
   @override
-Widget build(BuildContext context) {
+  Widget build(BuildContext context) {
 
-return WillPopScope(
-onWillPop: () async {
+    return WillPopScope(
 
+      onWillPop: () async {
 
-  if (currentIndex != 0) {
+        if (currentIndex != 0) {
 
-    setState(() {
-      currentIndex = 0;
-    });
+          setState(() {
+            currentIndex = 0;
+          });
 
-    return false;
+          return false;
+        }
 
+        return true;
+      },
+
+      child: Scaffold(
+
+        body: pages[currentIndex],
+
+        bottomNavigationBar:
+            BottomNavigationBar(
+
+          currentIndex: currentIndex,
+
+          type:
+              BottomNavigationBarType.fixed,
+
+          selectedItemColor:
+              const Color(0xFFD4AF37),
+
+          unselectedItemColor:
+              Colors.grey,
+
+          onTap: (index) {
+
+            setState(() {
+              currentIndex = index;
+            });
+
+          },
+
+          items: const [
+
+            BottomNavigationBarItem(
+              icon:
+                  Icon(Icons.dashboard_outlined),
+              label: "Home",
+            ),
+
+            BottomNavigationBarItem(
+              icon: Icon(
+                Icons.calendar_month_outlined,
+              ),
+              label: "Book Now",
+            ),
+
+            BottomNavigationBarItem(
+              icon:
+                  Icon(Icons.people_outline),
+              label: "Customers",
+            ),
+
+            BottomNavigationBarItem(
+              icon: Icon(
+                Icons.checkroom_outlined,
+              ),
+              label: "Products",
+            ),
+
+            BottomNavigationBarItem(
+              icon:
+                  Icon(Icons.bar_chart_outlined),
+              label: "Attendance",
+            ),
+
+          ],
+        ),
+      ),
+    );
   }
-
-  return true;
-},
-child: Scaffold(
-
-  body: pages[currentIndex],
-
-  bottomNavigationBar: BottomNavigationBar(
-
-    currentIndex: currentIndex,
-
-    type: BottomNavigationBarType.fixed,
-
-    selectedItemColor: const Color(0xFFD4AF37),
-
-    unselectedItemColor: Colors.grey,
-
-    onTap: (index){
-      setState(() {
-        currentIndex = index;
-      });
-    },
-
-    items: const [
-
-      BottomNavigationBarItem(
-        icon: Icon(Icons.dashboard_outlined),
-        label: "Home",
-      ),
-
-      BottomNavigationBarItem(
-        icon: Icon(Icons.calendar_month_outlined),
-        label: "Book Now",
-      ),
-
-      BottomNavigationBarItem(
-        icon: Icon(Icons.people_outline),
-        label: "Customers",
-      ),
-
-      BottomNavigationBarItem(
-        icon: Icon(Icons.checkroom_outlined),
-        label: "Products",
-      ),
-
-      BottomNavigationBarItem(
-        icon: Icon(Icons.bar_chart_outlined),
-        label: "Attendannce",
-      ),
-
-    ],
-  ),
-),
-
-
-);
-}
-
 }
