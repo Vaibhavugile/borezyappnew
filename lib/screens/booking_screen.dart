@@ -120,11 +120,37 @@ String? creditNoteId;
 double appliedCredit = 0;
 bool isButtonDisabled = false;
 
- @override
+@override
 void initState() {
   super.initState();
+
   products = getInitialProducts();
+
   fetchSubUsers();
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+
+    final userProvider =
+        Provider.of<UserProvider>(
+          context,
+          listen: false,
+        );
+
+    setState(() {
+
+     userDetails["receiptby"] =
+
+    (userProvider.userName != null &&
+            userProvider.userName!.trim().isNotEmpty)
+
+        ? userProvider.userName!
+
+        : "Admin";
+
+    });
+
+  });
+
 }
 
  List getInitialProducts() {
@@ -1285,32 +1311,57 @@ Widget buildCustomerStep() {
 
               const SizedBox(height:14),
 
-              DropdownButtonFormField<String>(
-                value:userDetails["receiptby"]==""?null:userDetails["receiptby"],
+              Container(
+  width: double.infinity,
 
-                icon: const Icon(Icons.keyboard_arrow_down_rounded),
+  padding: const EdgeInsets.all(16),
 
-                items: subUsers.map<DropdownMenuItem<String>>((user){
+  decoration: BoxDecoration(
+    color: Colors.grey.shade100,
+    borderRadius: BorderRadius.circular(14),
+  ),
 
-                  return DropdownMenuItem<String>(
-                    value:user["name"].toString(),
-                    child: Text(user["name"].toString()),
-                  );
+  child: Row(
+    children: [
 
-                }).toList(),
+      const Icon(
+        Icons.receipt_long_outlined,
+        color: Color(0xFF735C00),
+      ),
 
-                onChanged:(v)=>handleInputChange("receiptby",v),
+      const SizedBox(width:12),
 
-                decoration: InputDecoration(
-                  labelText:"Receipt By",
-                  filled:true,
-                  fillColor: Colors.grey.shade100,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
+      Expanded(
+        child: Column(
+          crossAxisAlignment:
+              CrossAxisAlignment.start,
+
+          children: [
+
+            const Text(
+              "Receipt By",
+              style: TextStyle(
+                fontSize:12,
+                color: Colors.grey,
               ),
+            ),
+
+            const SizedBox(height:2),
+
+            Text(
+              userDetails["receiptby"] ?? "",
+              style: const TextStyle(
+                fontSize:15,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+
+          ],
+        ),
+      ),
+    ],
+  ),
+),
 
               const SizedBox(height:14),
 

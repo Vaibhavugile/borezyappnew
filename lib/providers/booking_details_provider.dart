@@ -21,6 +21,7 @@ List<Map<String, dynamic>> bookings = [];
   /// TRANSACTIONS
   List<QueryDocumentSnapshot> transactions = [];
   List<dynamic> activityLogs = [];
+  List<dynamic> attachments = [];
 
   /// WHATSAPP TEMPLATES
   List<QueryDocumentSnapshot> templates = [];
@@ -128,6 +129,8 @@ if (bookingList.isNotEmpty) {
         paymentDoc = paymentSnap.data();
 
         stage = paymentDoc?["bookingStage"] ?? "";
+        attachments =
+    paymentDoc?["attachments"] ?? [];
 
       }
 

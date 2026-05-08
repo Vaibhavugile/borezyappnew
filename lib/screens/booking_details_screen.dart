@@ -4,6 +4,14 @@ import '../providers/booking_details_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../providers/user_provider.dart';
 import 'main_screen.dart';
+import 'dart:io';
+import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
+
+import 'package:firebase_storage/firebase_storage.dart';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 class BookingDetailsScreen extends StatefulWidget {
 
   final String receiptNumber;
@@ -149,6 +157,8 @@ const SizedBox(height:18),
 _activityLog(provider.activityLogs),
 const SizedBox(height:18),
 
+_attachmentsCard(provider.attachments),
+
        
 
           ],
@@ -231,6 +241,26 @@ String getStageLabel(String stage) {
   }
 
 }
+String formatDateTime(dynamic timestamp){
+
+  if(timestamp == null){
+    return "-";
+  }
+
+  try{
+
+    final date =
+        timestamp.toDate();
+
+    return DateFormat(
+      "dd MMM yyyy • hh:mm a"
+    ).format(date);
+
+  }catch(e){
+
+    return "-";
+  }
+}
   /// STAGE BADGE
  Widget _stageBadge(String stage){
 
@@ -312,6 +342,35 @@ String getStageLabel(String stage) {
           _infoRow("Receipt By", user["receiptby"]),
           _infoRow("Alterations", user["alterations"]),
            _infoRow("Special Note", user["specialnote"]),
+_infoRow(
+  "Created At",
+  formatDateTime(
+    Provider.of<BookingDetailsProvider>(
+      context,
+      listen:false,
+    ).paymentDoc?["createdAt"],
+  ),
+),
+
+_infoRow(
+  "Pickup Date",
+  formatDateTime(
+    Provider.of<BookingDetailsProvider>(
+      context,
+      listen:false,
+    ).paymentDoc?["pickupDate"],
+  ),
+),
+
+_infoRow(
+  "Return Date",
+  formatDateTime(
+    Provider.of<BookingDetailsProvider>(
+      context,
+      listen:false,
+    ).paymentDoc?["returnDate"],
+  ),
+),
         ],
       ),
     );
@@ -993,6 +1052,694 @@ Widget _activityLog(List logs) {
       ],
     ),
 
+  );
+}
+Widget _attachmentsCard(List attachments){
+
+  return _cardWrapper(
+
+    child: Column(
+      crossAxisAlignment:
+          CrossAxisAlignment.start,
+
+      children: [
+
+        const Text(
+          "Attachments",
+
+          style: TextStyle(
+            fontSize:18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+
+        const SizedBox(height:16),
+
+        Text(
+          attachments.isEmpty
+              ? "No attachments found"
+              : "${attachments.length} attachment(s)",
+
+          style: const TextStyle(
+            color: Colors.grey,
+          ),
+        ),
+
+        const SizedBox(height:18),
+
+        Row(
+          children: [
+
+            Expanded(
+              child: OutlinedButton.icon(
+
+                onPressed: () {
+                  showAttachmentsSheet(
+                    attachments,
+                  );
+                },
+
+                icon: const Icon(
+                  Icons.visibility_outlined,
+                ),
+
+                label: const Text(
+                  "View",
+                ),
+              ),
+            ),
+
+            const SizedBox(width:12),
+
+            Expanded(
+              child: ElevatedButton.icon(
+
+                onPressed: () {
+                  showAddAttachmentModal();
+                },
+
+                icon: const Icon(Icons.add),
+
+                label: const Text(
+                  "Add",
+                ),
+              ),
+            ),
+          ],
+        )
+      ],
+    ),
+  );
+}
+Future<File> compressImage(File file) async {
+
+  final targetPath =
+      "${file.path}_compressed.jpg";
+
+  final compressedFile =
+      await FlutterImageCompress.compressAndGetFile(
+
+    file.absolute.path,
+
+    targetPath,
+
+    quality: 60,
+    minWidth: 1280,
+    minHeight: 1280,
+  );
+
+  return File(compressedFile!.path);
+}
+void showAttachmentsSheet(
+  List attachments,
+){
+
+  showModalBottomSheet(
+
+    context: context,
+
+    isScrollControlled: true,
+
+    backgroundColor: Colors.transparent,
+
+    builder: (_) {
+
+      return Container(
+
+        height:
+            MediaQuery.of(context)
+                .size
+                .height * .82,
+
+        decoration: const BoxDecoration(
+          color: Colors.white,
+
+          borderRadius:
+              BorderRadius.vertical(
+            top: Radius.circular(30),
+          ),
+        ),
+
+        child: Column(
+          children: [
+
+            const SizedBox(height:14),
+
+            Container(
+              width: 50,
+              height: 5,
+
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius:
+                    BorderRadius.circular(20),
+              ),
+            ),
+
+            const SizedBox(height:20),
+
+            const Text(
+              "Attachments",
+
+              style: TextStyle(
+                fontSize:22,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+
+            const SizedBox(height:20),
+
+            Expanded(
+
+              child: attachments.isEmpty
+
+                  ? const Center(
+                      child: Text(
+                        "No attachments found",
+                      ),
+                    )
+
+                  : ListView.builder(
+
+                      padding:
+                          const EdgeInsets.all(20),
+
+                      itemCount:
+                          attachments.length,
+
+                      itemBuilder:
+                          (context,index){
+
+                        final data =
+                            Map<String,dynamic>
+                                .from(
+                          attachments[index],
+                        );
+
+                        final images =
+                            data["images"] ?? [];
+
+                        return Container(
+
+                          margin:
+                              const EdgeInsets
+                                  .only(
+                                      bottom:16),
+
+                          padding:
+                              const EdgeInsets
+                                  .all(14),
+
+                          decoration:
+                              BoxDecoration(
+                            color:
+                                const Color(
+                                    0xFFF6F3F2),
+
+                            borderRadius:
+                                BorderRadius
+                                    .circular(
+                                        14),
+                          ),
+
+                          child: Column(
+                            crossAxisAlignment:
+                                CrossAxisAlignment
+                                    .start,
+
+                            children: [
+
+                              Text(
+                                data["title"] ?? "",
+
+                                style:
+                                    const TextStyle(
+                                  fontWeight:
+                                      FontWeight
+                                          .w600,
+                                  fontSize:15,
+                                ),
+                              ),
+
+                              if((data["note"] ?? "")
+                                  .toString()
+                                  .isNotEmpty)
+
+                                Padding(
+                                  padding:
+                                      const EdgeInsets
+                                          .only(
+                                              top:8),
+
+                                  child: Text(
+                                    data["note"],
+
+                                    style:
+                                        const TextStyle(
+                                      color:
+                                          Colors.grey,
+                                    ),
+                                  ),
+                                ),
+
+                              if(images.isNotEmpty)
+
+                                Padding(
+                                  padding:
+                                      const EdgeInsets
+                                          .only(
+                                              top:14),
+
+                                  child:
+                                      SingleChildScrollView(
+
+                                    scrollDirection:
+                                        Axis.horizontal,
+
+                                    child: Row(
+
+                                      children:
+                                          images.map<
+                                              Widget>(
+                                        (img){
+
+                                          return GestureDetector(
+
+                                            onTap: (){
+                                              _showImagePreview(
+                                                context,
+                                                img,
+                                              );
+                                            },
+
+                                            child: Container(
+
+                                              margin:
+                                                  const EdgeInsets
+                                                      .only(
+                                                          right:
+                                                              10),
+
+                                              width:110,
+                                              height:140,
+
+                                              child:
+                                                  ClipRRect(
+
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                        14),
+
+                                                child:
+                                                    Image.network(
+                                                  img,
+                                                  fit:
+                                                      BoxFit.cover,
+                                                ),
+                                              ),
+                                            ),
+                                          );
+
+                                      }).toList(),
+                                    ),
+                                  ),
+                                )
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+            )
+          ],
+        ),
+      );
+    },
+  );
+}
+void showAddAttachmentModal() {
+
+  final provider =
+      Provider.of<BookingDetailsProvider>(
+    context,
+    listen: false,
+  );
+
+  TextEditingController titleController =
+      TextEditingController();
+
+  TextEditingController noteController =
+      TextEditingController();
+
+  List<File> selectedImages = [];
+
+  bool isSaving = false;
+
+  showDialog(
+
+    context: context,
+
+    builder: (dialogContext){
+
+      return StatefulBuilder(
+
+        builder: (context,setModalState){
+
+          return Dialog(
+
+            shape: RoundedRectangleBorder(
+              borderRadius:
+                  BorderRadius.circular(20),
+            ),
+
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+
+              child: SingleChildScrollView(
+
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+
+                  children: [
+
+                    const Text(
+                      "Add Attachment",
+
+                      style: TextStyle(
+                        fontSize:20,
+                        fontWeight:
+                            FontWeight.w600,
+                      ),
+                    ),
+
+                    const SizedBox(height:20),
+
+                    /// TITLE
+                    TextField(
+                      controller: titleController,
+
+                      decoration:
+                          const InputDecoration(
+                        labelText: "Title",
+                      ),
+                    ),
+
+                    const SizedBox(height:14),
+
+                    /// NOTE
+                    TextField(
+                      controller: noteController,
+
+                      maxLines: 3,
+
+                      decoration:
+                          const InputDecoration(
+                        labelText:
+                            "Note (optional)",
+                      ),
+                    ),
+
+                    const SizedBox(height:20),
+
+                    /// IMAGE PICK OPTIONS
+                    Row(
+                      children: [
+
+                        /// GALLERY
+                        Expanded(
+                          child: OutlinedButton.icon(
+
+                            onPressed: () async {
+
+                              final picker =
+                                  ImagePicker();
+
+                              final images =
+                                  await picker.pickMultiImage();
+
+                              if(images.isNotEmpty){
+
+                                selectedImages.clear();
+
+                                for(var img in images){
+
+                                  File compressed =
+                                      await compressImage(
+                                    File(img.path),
+                                  );
+
+                                  selectedImages.add(
+                                    compressed,
+                                  );
+                                }
+
+                                setModalState(() {});
+                              }
+                            },
+
+                            icon: const Icon(
+                              Icons.photo_library_outlined,
+                            ),
+
+                            label: const Text(
+                              "Gallery",
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(width:12),
+
+                        /// CAMERA
+                        Expanded(
+                          child: OutlinedButton.icon(
+
+                            onPressed: () async {
+
+                              final picker =
+                                  ImagePicker();
+
+                              final image =
+                                  await picker.pickImage(
+                                source: ImageSource.camera,
+                              );
+
+                              if(image != null){
+
+                                File compressed =
+                                    await compressImage(
+                                  File(image.path),
+                                );
+
+                                selectedImages.add(
+                                  compressed,
+                                );
+
+                                setModalState(() {});
+                              }
+                            },
+
+                            icon: const Icon(
+                              Icons.camera_alt_outlined,
+                            ),
+
+                            label: const Text(
+                              "Camera",
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height:16),
+
+                    /// IMAGE PREVIEW
+                    Wrap(
+                      spacing:10,
+                      runSpacing:10,
+
+                      children:
+                          selectedImages.map((img){
+
+                        return Stack(
+
+                          children: [
+
+                            ClipRRect(
+
+                              borderRadius:
+                                  BorderRadius.circular(
+                                      12),
+
+                              child: Image.file(
+                                img,
+                                width:80,
+                                height:80,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+
+                            Positioned(
+                              right:0,
+                              top:0,
+
+                              child: GestureDetector(
+
+                                onTap: () {
+
+                                  selectedImages.remove(img);
+
+                                  setModalState(() {});
+                                },
+
+                                child: Container(
+
+                                  padding:
+                                      const EdgeInsets.all(4),
+
+                                  decoration:
+                                      const BoxDecoration(
+                                    color: Colors.black54,
+                                    shape: BoxShape.circle,
+                                  ),
+
+                                  child: const Icon(
+                                    Icons.close,
+                                    color: Colors.white,
+                                    size:14,
+                                  ),
+                                ),
+                              ),
+                            )
+                          ],
+                        );
+
+                      }).toList(),
+                    ),
+
+                    const SizedBox(height:24),
+
+                    /// SAVE BUTTON
+                    SizedBox(
+                      width: double.infinity,
+
+                      child: ElevatedButton(
+
+                        onPressed: isSaving
+                            ? null
+                            : () async {
+
+                                if(titleController.text
+                                    .trim()
+                                    .isEmpty){
+                                  return;
+                                }
+
+                                setModalState(() {
+                                  isSaving = true;
+                                });
+
+                                try {
+
+                                  List<String> imageUrls = [];
+
+                                  for(File img
+                                      in selectedImages){
+
+                                    final ref =
+                                        FirebaseStorage
+                                            .instance
+                                            .ref()
+                                            .child(
+                                      "attachments/${DateTime.now().millisecondsSinceEpoch}",
+                                    );
+
+                                    await ref.putFile(img);
+
+                                    final url =
+                                        await ref
+                                            .getDownloadURL();
+
+                                    imageUrls.add(url);
+                                  }
+
+                                  /// SAFE COPY
+                                  List attachments =
+                                      List.from(
+                                    provider.attachments,
+                                  );
+
+                                  attachments.add({
+
+                                    "title":
+                                        titleController.text
+                                            .trim(),
+
+                                    "note":
+                                        noteController.text
+                                            .trim(),
+
+                                    "images":
+                                        imageUrls,
+                                  });
+
+                                  await FirebaseFirestore
+                                      .instance
+                                      .collection("products")
+                                      .doc(widget.branchCode)
+                                      .collection("payments")
+                                      .doc(widget.receiptNumber)
+                                      .update({
+
+                                    "attachments":
+                                        attachments,
+                                  });
+
+                                  await provider.fetchDetails();
+
+                                  if(dialogContext.mounted){
+
+                                    Navigator.pop(
+                                      dialogContext,
+                                    );
+                                  }
+
+                                } catch(e){
+
+                                  debugPrint(
+                                    "Attachment Save Error: $e",
+                                  );
+                                }
+
+                                setModalState(() {
+                                  isSaving = false;
+                                });
+                              },
+
+                        child: isSaving
+
+                            ? const SizedBox(
+                                height:20,
+                                width:20,
+
+                                child:
+                                    CircularProgressIndicator(
+                                  strokeWidth:2,
+                                  color: Colors.white,
+                                ),
+                              )
+
+                            : const Text(
+                                "Save Attachment",
+                              ),
+                      ),
+                    )
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    },
   );
 }
 
