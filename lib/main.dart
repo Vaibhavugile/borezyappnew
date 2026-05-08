@@ -3,6 +3,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+import 'firebase_options.dart';
+
 import 'screens/login_screen.dart';
 import 'screens/booking_screen.dart';
 import 'screens/main_screen.dart';
@@ -17,10 +19,14 @@ void main() async {
   try {
 
     /// INITIALIZE FIREBASE
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(
+      options:
+          DefaultFirebaseOptions.currentPlatform,
+    );
 
     /// INITIALIZE HIVE
     await Hive.initFlutter();
+
     await Hive.openBox('offline_cache');
 
     runApp(const MyApp());
@@ -30,13 +36,29 @@ void main() async {
     debugPrint("STARTUP ERROR: $e");
 
     runApp(
+
       MaterialApp(
+
         debugShowCheckedModeBanner: false,
+
         home: Scaffold(
+
           body: Center(
-            child: Text(
-              'Startup Error: $e',
-              textAlign: TextAlign.center,
+
+            child: Padding(
+
+              padding: const EdgeInsets.all(20),
+
+              child: Text(
+
+                'Startup Error: $e',
+
+                textAlign: TextAlign.center,
+
+                style: const TextStyle(
+                  fontSize: 16,
+                ),
+              ),
             ),
           ),
         ),
@@ -46,12 +68,14 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
+
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
 
     return MultiProvider(
+
       providers: [
 
         /// USER STATE
@@ -88,6 +112,7 @@ class MyApp extends StatelessWidget {
       ],
 
       child: MaterialApp(
+
         debugShowCheckedModeBanner: false,
 
         title: 'Borezy',
@@ -103,26 +128,40 @@ class MyApp extends StatelessWidget {
 
           colorScheme:
               const ColorScheme.light(
+
             primary: Color(0xFF735C00),
+
             secondary: Color(0xFFD4AF37),
+
             background: Color(0xFFFBF9F8),
+
             surface: Colors.white,
+
             onPrimary: Colors.white,
+
             onSurface: Color(0xFF1B1C1C),
           ),
 
           /// APPBAR
           appBarTheme: const AppBarTheme(
+
             backgroundColor:
                 Color(0xFFFBF9F8),
+
             elevation: 0,
+
             centerTitle: false,
+
             iconTheme: IconThemeData(
               color: Color(0xFF735C00),
             ),
+
             titleTextStyle: TextStyle(
+
               fontSize: 22,
+
               fontWeight: FontWeight.w600,
+
               color: Color(0xFF735C00),
             ),
           ),
@@ -130,19 +169,28 @@ class MyApp extends StatelessWidget {
           /// INPUT FIELDS
           inputDecorationTheme:
               InputDecorationTheme(
+
             filled: true,
+
             fillColor:
                 const Color(0xFFF6F3F2),
+
             contentPadding:
                 const EdgeInsets.symmetric(
+
               vertical: 16,
+
               horizontal: 16,
             ),
+
             border: OutlineInputBorder(
+
               borderRadius:
                   BorderRadius.circular(14),
+
               borderSide: BorderSide.none,
             ),
+
             hintStyle: const TextStyle(
               color: Color(0xFF8A8578),
             ),
@@ -151,19 +199,28 @@ class MyApp extends StatelessWidget {
           /// BUTTON STYLE
           elevatedButtonTheme:
               ElevatedButtonThemeData(
+
             style:
                 ElevatedButton.styleFrom(
+
               backgroundColor:
                   const Color(0xFF1B1C1C),
+
               foregroundColor: Colors.white,
+
               elevation: 0,
+
               padding:
                   const EdgeInsets.symmetric(
+
                 vertical: 16,
+
                 horizontal: 24,
               ),
+
               shape:
                   RoundedRectangleBorder(
+
                 borderRadius:
                     BorderRadius.circular(30),
               ),
@@ -172,10 +229,14 @@ class MyApp extends StatelessWidget {
 
           /// CARD STYLE
           cardTheme: CardThemeData(
+
             color: const Color(0xFFF6F3F2),
+
             elevation: 0,
+
             shape:
                 RoundedRectangleBorder(
+
               borderRadius:
                   BorderRadius.circular(18),
             ),
@@ -183,13 +244,20 @@ class MyApp extends StatelessWidget {
 
           /// TEXT THEME
           textTheme: const TextTheme(
+
             headlineLarge: TextStyle(
+
               fontSize: 34,
+
               fontWeight: FontWeight.w600,
+
               color: Color(0xFF1B1C1C),
             ),
+
             bodyMedium: TextStyle(
+
               fontSize: 14,
+
               color: Color(0xFF4D4635),
             ),
           ),
