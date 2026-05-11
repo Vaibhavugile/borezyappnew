@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'firebase_options.dart';
 
@@ -9,11 +10,13 @@ import 'screens/login_screen.dart';
 import 'screens/booking_screen.dart';
 import 'screens/main_screen.dart';
 import 'screens/gate_screen.dart';
-
+import 'screens/welcome_screen.dart';
 import 'providers/user_provider.dart';
 import 'providers/dashboard_provider.dart';
-
+import 'screens/welcome_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 void main() async {
+
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
@@ -29,11 +32,50 @@ void main() async {
 
     await Hive.openBox('offline_cache');
 
-    runApp(const MyApp());
+    /// LOAD SAVED USER
+    final prefs =
+        await SharedPreferences.getInstance();
+
+    final savedEmail =
+        prefs.getString('email');
+
+    Map<String, dynamic>? cachedUser;
+    
+
+    if (savedEmail != null) {
+
+      final box =
+          Hive.box('offline_cache');
+
+      final data =
+          box.get(savedEmail);
+
+      if (data != null) {
+
+        cachedUser =
+            Map<String, dynamic>.from(data);
+            debugPrint(
+  "RESTORED USER: $cachedUser",
+);
+
+        debugPrint(
+          "RESTORED USER: $cachedUser",
+        );
+      }
+    }
+
+    runApp(
+
+      MyApp(
+        cachedUser: cachedUser,
+      ),
+    );
 
   } catch (e) {
 
-    debugPrint("STARTUP ERROR: $e");
+    debugPrint(
+      "STARTUP ERROR: $e",
+    );
 
     runApp(
 
@@ -47,7 +89,8 @@ void main() async {
 
             child: Padding(
 
-              padding: const EdgeInsets.all(20),
+              padding:
+                  const EdgeInsets.all(20),
 
               child: Text(
 
@@ -69,7 +112,12 @@ void main() async {
 
 class MyApp extends StatelessWidget {
 
-  const MyApp({super.key});
+  final Map<String, dynamic>? cachedUser;
+
+  const MyApp({
+    super.key,
+    this.cachedUser,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -78,9 +126,13 @@ class MyApp extends StatelessWidget {
 
       providers: [
 
-        /// USER STATE
+        /// USER PROVIDER
         ChangeNotifierProvider(
-          create: (_) => UserProvider(),
+
+          create: (_) => UserProvider()
+            ..setInitialUserData(
+              cachedUser,
+            ),
         ),
 
         /// DASHBOARD PROVIDER
@@ -88,7 +140,8 @@ class MyApp extends StatelessWidget {
             UserProvider,
             DashboardProvider>(
 
-          create: (_) => DashboardProvider(""),
+          create: (_) =>
+              DashboardProvider(""),
 
           update: (
             _,
@@ -96,16 +149,19 @@ class MyApp extends StatelessWidget {
             dashboardProvider,
           ) {
 
-            final branchCode =
-                userProvider.branchCode ?? "";
+            /// ONLY UPDATE IF USER EXISTS
+            if (userProvider.userData != null) {
 
-            dashboardProvider!.branchCode =
-                branchCode;
+              dashboardProvider!.branchCode =
+                  userProvider.branchCode;
 
-            /// DO NOT CALL fetchData() HERE
-            /// THIS CAN CAUSE iOS WHITE SCREEN
+              debugPrint(
+                "Dashboard BranchCode: "
+                "${userProvider.branchCode}",
+              );
+            }
 
-            return dashboardProvider;
+            return dashboardProvider!;
           },
         ),
 
@@ -117,7 +173,6 @@ class MyApp extends StatelessWidget {
 
         title: 'Borezy',
 
-        /// GLOBAL THEME
         theme: ThemeData(
 
           scaffoldBackgroundColor:
@@ -129,21 +184,27 @@ class MyApp extends StatelessWidget {
           colorScheme:
               const ColorScheme.light(
 
-            primary: Color(0xFF735C00),
+            primary:
+                Color(0xFF735C00),
 
-            secondary: Color(0xFFD4AF37),
+            secondary:
+                Color(0xFFD4AF37),
 
-            background: Color(0xFFFBF9F8),
+            background:
+                Color(0xFFFBF9F8),
 
-            surface: Colors.white,
+            surface:
+                Colors.white,
 
-            onPrimary: Colors.white,
+            onPrimary:
+                Colors.white,
 
-            onSurface: Color(0xFF1B1C1C),
+            onSurface:
+                Color(0xFF1B1C1C),
           ),
 
-          /// APPBAR
-          appBarTheme: const AppBarTheme(
+          appBarTheme:
+              const AppBarTheme(
 
             backgroundColor:
                 Color(0xFFFBF9F8),
@@ -153,27 +214,31 @@ class MyApp extends StatelessWidget {
             centerTitle: false,
 
             iconTheme: IconThemeData(
-              color: Color(0xFF735C00),
+              color:
+                  Color(0xFF735C00),
             ),
 
-            titleTextStyle: TextStyle(
+            titleTextStyle:
+                TextStyle(
 
               fontSize: 22,
 
-              fontWeight: FontWeight.w600,
+              fontWeight:
+                  FontWeight.w600,
 
-              color: Color(0xFF735C00),
+              color:
+                  Color(0xFF735C00),
             ),
           ),
 
-          /// INPUT FIELDS
           inputDecorationTheme:
               InputDecorationTheme(
 
             filled: true,
 
             fillColor:
-                const Color(0xFFF6F3F2),
+                const Color(
+                    0xFFF6F3F2),
 
             contentPadding:
                 const EdgeInsets.symmetric(
@@ -183,20 +248,25 @@ class MyApp extends StatelessWidget {
               horizontal: 16,
             ),
 
-            border: OutlineInputBorder(
+            border:
+                OutlineInputBorder(
 
               borderRadius:
-                  BorderRadius.circular(14),
+                  BorderRadius.circular(
+                      14),
 
-              borderSide: BorderSide.none,
+              borderSide:
+                  BorderSide.none,
             ),
 
-            hintStyle: const TextStyle(
-              color: Color(0xFF8A8578),
+            hintStyle:
+                const TextStyle(
+
+              color:
+                  Color(0xFF8A8578),
             ),
           ),
 
-          /// BUTTON STYLE
           elevatedButtonTheme:
               ElevatedButtonThemeData(
 
@@ -204,9 +274,11 @@ class MyApp extends StatelessWidget {
                 ElevatedButton.styleFrom(
 
               backgroundColor:
-                  const Color(0xFF1B1C1C),
+                  const Color(
+                      0xFF1B1C1C),
 
-              foregroundColor: Colors.white,
+              foregroundColor:
+                  Colors.white,
 
               elevation: 0,
 
@@ -222,15 +294,17 @@ class MyApp extends StatelessWidget {
                   RoundedRectangleBorder(
 
                 borderRadius:
-                    BorderRadius.circular(30),
+                    BorderRadius.circular(
+                        30),
               ),
             ),
           ),
 
-          /// CARD STYLE
           cardTheme: CardThemeData(
 
-            color: const Color(0xFFF6F3F2),
+            color:
+                const Color(
+                    0xFFF6F3F2),
 
             elevation: 0,
 
@@ -238,33 +312,45 @@ class MyApp extends StatelessWidget {
                 RoundedRectangleBorder(
 
               borderRadius:
-                  BorderRadius.circular(18),
+                  BorderRadius.circular(
+                      18),
             ),
           ),
 
-          /// TEXT THEME
-          textTheme: const TextTheme(
+          textTheme:
+              const TextTheme(
 
-            headlineLarge: TextStyle(
+            headlineLarge:
+                TextStyle(
 
               fontSize: 34,
 
-              fontWeight: FontWeight.w600,
+              fontWeight:
+                  FontWeight.w600,
 
-              color: Color(0xFF1B1C1C),
+              color:
+                  Color(0xFF1B1C1C),
             ),
 
-            bodyMedium: TextStyle(
+            bodyMedium:
+                TextStyle(
 
               fontSize: 14,
 
-              color: Color(0xFF4D4635),
+              color:
+                  Color(0xFF4D4635),
             ),
           ),
         ),
 
         /// START SCREEN
-        home: const GateScreen(),
+        home:
+
+    FirebaseAuth.instance.currentUser == null
+
+        ? const WelcomeScreen()
+
+        : const GateScreen(),
       ),
     );
   }

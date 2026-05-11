@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
 import 'main_screen.dart';
+import 'apply_leave_screen.dart';
 
 class AttendanceScreen extends StatefulWidget {
 const AttendanceScreen({super.key});
@@ -30,8 +31,17 @@ String? checkInTime;
 String? checkOutTime;
 
 String getTodayId() {
-DateTime now = DateTime.now();
-return "${now.year}-${now.month}-${now.day}";
+
+  DateTime now =
+      DateTime.now();
+
+
+
+  return
+
+  "${now.year}-"
+  "${now.month.toString().padLeft(2,'0')}-"
+  "${now.day.toString().padLeft(2,'0')}";
 }
 
 @override
@@ -304,6 +314,8 @@ Future<void> checkIn() async {
     "userId": userId,
     "branchCode": branchCode,
     "checkInTime": FieldValue.serverTimestamp(),
+    "date":
+      Timestamp.now(),
     "lat": userLat,
     "lng": userLng,
     "distance": distance,
@@ -856,6 +868,68 @@ style: TextStyle(fontWeight: FontWeight.bold),
 
 ),
 const SizedBox(height:16),
+
+SizedBox(
+
+  width: double.infinity,
+
+  child: ElevatedButton.icon(
+
+    icon: const Icon(
+      Icons.event_note,
+    ),
+
+    label: const Text(
+      "Apply Leave",
+      style: TextStyle(
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+
+    onPressed: () {
+
+      Navigator.push(
+
+        context,
+
+        MaterialPageRoute(
+
+          builder: (_) =>
+
+            const ApplyLeaveScreen(),
+        ),
+      );
+    },
+
+    style: ElevatedButton.styleFrom(
+
+      backgroundColor:
+          Colors.white,
+
+      foregroundColor:
+          const Color(0xFF735C00),
+
+      elevation:0,
+
+      side: const BorderSide(
+
+        color: Color(0xFFD4AF37),
+      ),
+
+      minimumSize:
+          const Size(0,55),
+
+      shape:
+          RoundedRectangleBorder(
+
+        borderRadius:
+            BorderRadius.circular(16),
+      ),
+    ),
+  ),
+),
+const SizedBox(height:16),
+
 
 Center(
   child: TextButton(

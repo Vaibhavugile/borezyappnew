@@ -13,7 +13,7 @@ import 'subuser_dashboard.dart';
 import '../providers/user_provider.dart';
 import 'main_screen.dart';
 import 'gate_screen.dart';
-
+import 'welcome_screen.dart';
 class LoginScreen extends StatefulWidget {
   @override
   _LoginScreenState createState() => _LoginScreenState();
@@ -36,6 +36,55 @@ class _LoginScreenState extends State<LoginScreen> {
     }
     return dateStr;
   }
+  Map<String, dynamic> cleanMap(
+  Map<String, dynamic> map,
+) {
+
+  return map.map((key, value) {
+
+    /// FIRESTORE TIMESTAMP
+    if (value is Timestamp) {
+
+      return MapEntry(
+        key,
+        value.toDate().toIso8601String(),
+      );
+    }
+
+    /// NESTED MAP
+    else if (value is Map) {
+
+      return MapEntry(
+        key,
+        cleanMap(
+          Map<String, dynamic>.from(value),
+        ),
+      );
+    }
+
+    /// LIST
+    else if (value is List) {
+
+      return MapEntry(
+        key,
+        value.map((e) {
+
+          if (e is Timestamp) {
+            return e
+                .toDate()
+                .toIso8601String();
+          }
+
+          return e;
+
+        }).toList(),
+      );
+    }
+
+    return MapEntry(key, value);
+
+  });
+}
 
   Future<void> _handleLogin() async {
     setState(() {
@@ -91,7 +140,18 @@ class _LoginScreenState extends State<LoginScreen> {
         final data = superAdmins.docs.first.data();
         data['role'] = 'admin';
         Provider.of<UserProvider>(context, listen: false).setUserData(data);
-        hiveBox.put(email, data);
+     final cleanedData =
+    cleanMap(
+      Map<String, dynamic>.from(data),
+    );
+
+hiveBox.put(
+  email,
+  cleanedData,
+);
+debugPrint(
+  "SAVED USER: $data",
+);
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => AdminScreen()));
         return;
       }
@@ -112,7 +172,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
         data['role'] = 'branch';
         Provider.of<UserProvider>(context, listen: false).setUserData(data);
-        hiveBox.put(email, data);
+        final cleanedData =
+    cleanMap(
+      Map<String, dynamic>.from(data),
+    );
+
+hiveBox.put(
+  email,
+  cleanedData,
+);
+debugPrint(
+  "SAVED USER: $data",
+);
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) =>  GateScreen()));
         return;
       }
@@ -159,7 +230,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
         data['role'] = 'subuser';  // Normalize role casing
         Provider.of<UserProvider>(context, listen: false).setUserData(data);
-        hiveBox.put(email, data);
+       final cleanedData =
+    cleanMap(
+      Map<String, dynamic>.from(data),
+    );
+
+hiveBox.put(
+  email,
+  cleanedData,
+);
+debugPrint(
+  "SAVED USER: $data",
+);
         print('Navigating to MainScreen');
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) =>  GateScreen()));
         return;
@@ -365,6 +447,210 @@ body: Center(
                         ),
                 ),
               ),
+              const SizedBox(height: 18),
+
+/* =====================================================
+   SIGN UP
+===================================================== */
+
+Center(
+
+  child: GestureDetector(
+
+    onTap: () {
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+
+        const SnackBar(
+
+          content: Text(
+            "Signup Coming Soon",
+          ),
+        ),
+      );
+    },
+
+    child: RichText(
+
+      text: const TextSpan(
+
+        children: [
+
+          TextSpan(
+
+            text:
+                "New business? ",
+
+            style: TextStyle(
+
+              color: Colors.black54,
+
+              fontSize: 14,
+            ),
+          ),
+
+          TextSpan(
+
+            text:
+                "Create Account",
+
+            style: TextStyle(
+
+              color:
+                  Color(0xFFD4AF37),
+
+              fontWeight:
+                  FontWeight.bold,
+
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    ),
+  ),
+),
+
+const SizedBox(height: 20),
+
+/* =====================================================
+   BOOK DEMO
+===================================================== */
+
+Container(
+
+  width: double.infinity,
+
+  decoration: BoxDecoration(
+
+    color:
+        const Color(0xFFF8F3EA),
+
+    borderRadius:
+        BorderRadius.circular(20),
+
+    border: Border.all(
+      color:
+          const Color(0xFFE8D8B0),
+    ),
+  ),
+
+  padding:
+      const EdgeInsets.all(18),
+
+  child: Column(
+
+    children: [
+
+      const Icon(
+
+        Icons.support_agent_rounded,
+
+        color:
+            Color(0xFFD4AF37),
+
+        size: 34,
+      ),
+
+      const SizedBox(height: 10),
+
+      const Text(
+
+        "Need a Business Demo?",
+
+        style: TextStyle(
+
+          fontWeight:
+              FontWeight.bold,
+
+          fontSize: 16,
+        ),
+      ),
+
+      const SizedBox(height: 6),
+
+      Text(
+
+        "Talk with Borezy team for onboarding, setup and business assistance.",
+
+        textAlign: TextAlign.center,
+
+        style: TextStyle(
+
+          color:
+              Colors.grey.shade700,
+
+          height: 1.4,
+
+          fontSize: 13,
+        ),
+      ),
+
+      const SizedBox(height: 16),
+
+      SizedBox(
+
+        width: double.infinity,
+
+        child: OutlinedButton(
+
+          onPressed: () {
+
+            ScaffoldMessenger.of(
+                    context)
+                .showSnackBar(
+
+              const SnackBar(
+
+                content: Text(
+                  "Demo Request Coming Soon",
+                ),
+              ),
+            );
+          },
+
+          style:
+              OutlinedButton.styleFrom(
+
+            foregroundColor:
+                const Color(
+                    0xFF1B1C1C),
+
+            padding:
+                const EdgeInsets.symmetric(
+              vertical: 14,
+            ),
+
+            side: BorderSide(
+              color:
+                  Colors.grey.shade300,
+            ),
+
+            shape:
+                RoundedRectangleBorder(
+
+              borderRadius:
+                  BorderRadius.circular(
+                      16),
+            ),
+          ),
+
+          child: const Text(
+
+            "BOOK DEMO",
+
+            style: TextStyle(
+
+              fontWeight:
+                  FontWeight.bold,
+            ),
+          ),
+        ),
+      )
+    ],
+  ),
+),
 
             ],
           ),

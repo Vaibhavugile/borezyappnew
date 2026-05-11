@@ -3503,6 +3503,7 @@ for (int i = 0; i < products.length; i++) {
     });
 
 /// UPDATE CREDIT NOTE BALANCE
+/// UPDATE CREDIT NOTE + HISTORY
 if (appliedCredit > 0 && creditNoteId != null) {
 
   var creditRef = FirebaseFirestore.instance
@@ -3515,17 +3516,96 @@ if (appliedCredit > 0 && creditNoteId != null) {
 
   if (creditDoc.exists) {
 
-    double currentBalance =
-        double.tryParse(creditDoc["Balance"].toString()) ?? 0;
+    Map<String, dynamic> creditData =
+        creditDoc.data() as Map<String, dynamic>;
 
-    double remainingCredit = currentBalance - appliedCredit;
+    /// PREVIOUS BALANCE
+    double previousBalance =
+        double.tryParse(
+          creditData["Balance"].toString(),
+        ) ?? 0;
+
+    /// TOTAL CREDIT
+    double totalCredit =
+        double.tryParse(
+          creditData["amount"].toString(),
+        ) ?? 0;
+
+    /// USED CREDIT
+    double usedAmount =
+        double.tryParse(
+          appliedCredit.toString(),
+        ) ?? 0;
+
+    /// REMAINING CREDIT
+    double remainingCredit =
+        previousBalance - usedAmount;
 
     if (remainingCredit < 0) {
       remainingCredit = 0;
     }
 
+    /// TOTAL USED CREDIT
+    double creditUsed =
+        totalCredit - remainingCredit;
+
+    /* ================= UPDATE CREDIT NOTE ================= */
+
     await creditRef.update({
-      "Balance": remainingCredit
+
+      "Balance": remainingCredit,
+
+      "CreditUsed": creditUsed,
+
+      "status":
+          remainingCredit > 0
+              ? "active"
+              : "used",
+
+      "usedReceipts":
+          FieldValue.arrayUnion(
+            [receiptNumber]
+          ),
+
+      "updatedAt":
+          FieldValue.serverTimestamp(),
+
+      "updatedBy":
+          userDetails["receiptby"] ?? "system",
+
+    });
+
+    /* ================= ADD CREDIT HISTORY ================= */
+
+    await creditRef
+        .collection("history")
+        .add({
+
+      "type": "USED",
+
+      "amount": usedAmount,
+
+      "previousBalance":
+          previousBalance,
+
+      "newBalance":
+          remainingCredit,
+
+      "receiptNo":
+          receiptNumber,
+
+      "orderId":
+          receiptNumber,
+
+      "note":
+          "Credit used in booking $receiptNumber",
+
+      "createdAt":
+          FieldValue.serverTimestamp(),
+
+      "createdBy":
+          userDetails["receiptby"] ?? "system",
+
     });
 
   }
