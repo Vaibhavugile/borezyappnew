@@ -46,10 +46,52 @@ List<Map<String, dynamic>> bookings = [];
 
   Future<void> fetchDetails() async {
 
-    loading = true;
+  loading = true;
+  notifyListeners();
+
+  /// =====================================
+  /// GUEST / DEMO MODE
+  /// =====================================
+
+  if (branchCode.isEmpty ||
+      branchCode == "0707") {
+
+    bookings = [];
+
+    paymentDoc = {
+
+      "bookingStage": "demo"
+    };
+
+    transactions = [];
+
+    activityLogs = [];
+
+    attachments = [];
+
+    templates = [];
+
+    customerDetails = {
+
+      "name": "Guest User",
+
+      "contact": "9999999999",
+    };
+
+    stage = "demo";
+
+    productCodes = [];
+
+    totalProducts = 0;
+
+    loading = false;
+
     notifyListeners();
 
-    try {
+    return;
+  }
+
+  try {
       /// FETCH ALL PRODUCTS
 var productsSnap = await FirebaseFirestore.instance
     .collection("products")

@@ -182,18 +182,23 @@ if (existingProduct.exists) {
 
         "productName": productNameController.text,
         "brandName": brandNameController.text,
-        "quantity": int.tryParse(quantityController.text) ?? 0,
-        "price": double.tryParse(priceController.text) ?? 0,
-        "deposit": double.tryParse(depositController.text) ?? 0,
+"quantity": quantityController.text.trim(),
+
+"price": priceController.text.trim(),
+
+"deposit": depositController.text.trim(),
         "productCode": productCode,
         "description": descriptionController.text,
         "imageUrls": imageUrls,
         "branchCode": branchCode,
         "customFields": {},
         "priceType": priceType,
-        "extraRent": int.tryParse(extraRentController.text) ?? 1,
-        "minimumRentalPeriod": int.tryParse(minimumRentalController.text) ?? 1,
-        "createdAt": FieldValue.serverTimestamp(),
+"extraRent":
+    extraRentController.text.trim(),
+
+"minimumRentalPeriod":
+    minimumRentalController.text.trim(),
+            "createdAt": FieldValue.serverTimestamp(),
 
       };
 

@@ -14,6 +14,7 @@ import '../providers/user_provider.dart';
 import 'main_screen.dart';
 import 'gate_screen.dart';
 import 'welcome_screen.dart';
+import 'signup_screen.dart';
 class LoginScreen extends StatefulWidget {
   @override
   _LoginScreenState createState() => _LoginScreenState();
@@ -134,6 +135,55 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       final firestore = FirebaseFirestore.instance;
+      /// =====================================
+/// CUSTOMER LOGIN
+/// =====================================
+
+final customers = await firestore
+    .collection('customers')
+    .where('email', isEqualTo: email)
+    .get();
+
+if (customers.docs.isNotEmpty) {
+
+  final data =
+      customers.docs.first.data();
+
+  data['role'] = 'customer';
+
+  data['userId'] = user.uid;
+
+  Provider.of<UserProvider>(
+    context,
+    listen: false,
+  ).setUserData(data);
+
+  final cleanedData =
+      cleanMap(
+    Map<String, dynamic>.from(data),
+  );
+
+  hiveBox.put(
+    email,
+    cleanedData,
+  );
+
+  debugPrint(
+    "CUSTOMER LOGIN: $data",
+  );
+
+  Navigator.pushReplacement(
+
+    context,
+
+    MaterialPageRoute(
+      builder: (_) =>
+          const MainScreen(),
+    ),
+  );
+
+  return;
+}
 
       final superAdmins = await firestore.collection('superadmins').where('email', isEqualTo: email).get();
       if (superAdmins.docs.isNotEmpty) {
@@ -457,19 +507,18 @@ Center(
 
   child: GestureDetector(
 
-    onTap: () {
+  onTap: () {
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+  Navigator.push(
 
-        const SnackBar(
+    context,
 
-          content: Text(
-            "Signup Coming Soon",
-          ),
-        ),
-      );
-    },
+    MaterialPageRoute(
+      builder: (_) =>
+          const SignupScreen(),
+    ),
+  );
+},
 
     child: RichText(
 

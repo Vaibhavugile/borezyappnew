@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/dashboard_provider.dart';
+import '../providers/user_provider.dart';
 
 import 'dashboard_screen.dart';
 import 'booking_screen.dart';
@@ -35,32 +36,85 @@ class _MainScreenState
     currentIndex = widget.initialIndex;
 
     /// LOAD DASHBOARD DATA SAFELY
-    Future.microtask(() {
+    /// LOAD DASHBOARD DATA SAFELY
+Future.microtask(() {
 
-      Provider.of<DashboardProvider>(
-        context,
-        listen: false,
-      ).fetchData();
+  final userProvider =
+      Provider.of<UserProvider>(
+    context,
+    listen: false,
+  );
 
-    });
+  final bool isGuest =
+
+      userProvider.userData != null &&
+
+      userProvider.userData!['isGuest'] ==
+          true;
+
+  /// SKIP FIREBASE LOAD FOR GUEST
+  if (isGuest) {
+    return;
   }
 
-  final List<Widget> pages = [
+  Provider.of<DashboardProvider>(
+    context,
+    listen: false,
+  ).fetchData();
 
-    const DashboardScreen(),
+});
+  }
 
-    const Booking(),
+  /// =====================================
+  /// DYNAMIC PAGES
+  /// =====================================
 
-    const BookingListScreen(),
+  List<Widget> getPages(bool isCustomer) {
 
-    const AddProductScreen(),
+    /// CUSTOMER USERS
+    if (isCustomer) {
 
-    const AttendanceScreen(),
+      return [
 
-  ];
+        const DashboardScreen(),
+
+        const Booking(),
+
+        const BookingListScreen(),
+
+      ];
+    }
+
+    /// STAFF USERS
+    return [
+
+      const DashboardScreen(),
+
+      const Booking(),
+
+      const BookingListScreen(),
+
+      const AddProductScreen(),
+
+      const AttendanceScreen(),
+
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
+
+    final userProvider =
+        Provider.of<UserProvider>(context);
+
+    final bool isCustomer =
+
+        userProvider.userData != null &&
+
+        userProvider.userData!['role'] ==
+            'customer';
+
+    final pages = getPages(isCustomer);
 
     return WillPopScope(
 
@@ -104,41 +158,74 @@ class _MainScreenState
 
           },
 
-          items: const [
+          /// =====================================
+          /// CUSTOMER NAVIGATION
+          /// =====================================
 
-            BottomNavigationBarItem(
-              icon:
-                  Icon(Icons.dashboard_outlined),
-              label: "Home",
-            ),
+          items: isCustomer
 
-            BottomNavigationBarItem(
-              icon: Icon(
-                Icons.calendar_month_outlined,
-              ),
-              label: "Book Now",
-            ),
+              ? const [
 
-            BottomNavigationBarItem(
-              icon:
-                  Icon(Icons.people_outline),
-              label: "Customers",
-            ),
+                  BottomNavigationBarItem(
+                    icon:
+                        Icon(Icons.dashboard_outlined),
+                    label: "Home",
+                  ),
 
-            BottomNavigationBarItem(
-              icon: Icon(
-                Icons.checkroom_outlined,
-              ),
-              label: "Products",
-            ),
+                  BottomNavigationBarItem(
+                    icon: Icon(
+                      Icons.calendar_month_outlined,
+                    ),
+                    label: "Book",
+                  ),
 
-            BottomNavigationBarItem(
-              icon:
-                  Icon(Icons.bar_chart_outlined),
-              label: "Attendance",
-            ),
+                  BottomNavigationBarItem(
+                    icon:
+                        Icon(Icons.people_outline),
+                    label: "Orders",
+                  ),
 
-          ],
+                ]
+
+              /// =====================================
+              /// STAFF NAVIGATION
+              /// =====================================
+
+              : const [
+
+                  BottomNavigationBarItem(
+                    icon:
+                        Icon(Icons.dashboard_outlined),
+                    label: "Home",
+                  ),
+
+                  BottomNavigationBarItem(
+                    icon: Icon(
+                      Icons.calendar_month_outlined,
+                    ),
+                    label: "Book Now",
+                  ),
+
+                  BottomNavigationBarItem(
+                    icon:
+                        Icon(Icons.people_outline),
+                    label: "Customers",
+                  ),
+
+                  BottomNavigationBarItem(
+                    icon: Icon(
+                      Icons.checkroom_outlined,
+                    ),
+                    label: "Products",
+                  ),
+
+                  BottomNavigationBarItem(
+                    icon:
+                        Icon(Icons.bar_chart_outlined),
+                    label: "Attendance",
+                  ),
+
+                ],
         ),
       ),
     );

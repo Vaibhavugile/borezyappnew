@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'login_screen.dart';
+import 'signup_screen.dart';
 
 class WelcomeScreen extends StatelessWidget {
 
@@ -16,271 +17,278 @@ class WelcomeScreen extends StatelessWidget {
 
       body: SafeArea(
 
-        child: Padding(
+        child: SingleChildScrollView(
 
-          padding:
-              const EdgeInsets.symmetric(
-            horizontal: 24,
-            vertical: 20,
-          ),
+          physics:
+              const BouncingScrollPhysics(),
 
-          child: Column(
+          child: ConstrainedBox(
 
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+            constraints: BoxConstraints(
 
-            children: [
+              minHeight:
+                  MediaQuery.of(context)
+                          .size
+                          .height -
+                      MediaQuery.of(context)
+                          .padding
+                          .top,
+            ),
 
-              const Spacer(),
+            child: Padding(
 
-              /* =====================================================
-                 LOGO
-              ===================================================== */
-
-              Center(
-
-                child: Container(
-
-                  height: 90,
-                  width: 90,
-
-                  decoration: BoxDecoration(
-
-                    gradient:
-                        const LinearGradient(
-
-                      colors: [
-
-                        Color(0xFFD4AF37),
-
-                        Color(0xFFF4D58D),
-                      ],
-                    ),
-
-                    borderRadius:
-                        BorderRadius.circular(
-                            28),
-                  ),
-
-                  child: const Icon(
-
-                    Icons.storefront_rounded,
-
-                    color: Colors.white,
-
-                    size: 48,
-                  ),
-                ),
+              padding:
+                  const EdgeInsets.symmetric(
+                horizontal: 24,
+                vertical: 20,
               ),
 
-              const SizedBox(height: 30),
+              child: Column(
 
-              /* =====================================================
-                 TITLE
-              ===================================================== */
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
 
-              const Center(
+                children: [
 
-                child: Text(
+                  const SizedBox(height: 30),
 
-                  "Borezy",
+                  /// LOGO
+                  Center(
 
-                  style: TextStyle(
+                    child: Container(
 
-                    fontSize: 36,
+                      height: 90,
+                      width: 90,
 
-                    fontWeight:
-                        FontWeight.bold,
+                      decoration: BoxDecoration(
 
-                    color:
-                        Color(0xFF1B1C1C),
-                  ),
-                ),
-              ),
+                        gradient:
+                            const LinearGradient(
 
-              const SizedBox(height: 12),
+                          colors: [
 
-              Center(
+                            Color(0xFFD4AF37),
 
-                child: Text(
+                            Color(0xFFF4D58D),
+                          ],
+                        ),
 
-                  "Fashion Rental Business Platform",
-
-                  textAlign: TextAlign.center,
-
-                  style: TextStyle(
-
-                    fontSize: 15,
-
-                    height: 1.5,
-
-                    color:
-                        Colors.grey.shade700,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 50),
-
-              /* =====================================================
-                 FEATURES
-              ===================================================== */
-
-              _featureTile(
-                Icons.calendar_month_rounded,
-                "Booking Management",
-              ),
-
-              _featureTile(
-                Icons.people_alt_rounded,
-                "Customer CRM",
-              ),
-
-              _featureTile(
-                Icons.inventory_2_rounded,
-                "Inventory Tracking",
-              ),
-
-              _featureTile(
-                Icons.analytics_rounded,
-                "Business Analytics",
-              ),
-
-              const Spacer(),
-
-              /* =====================================================
-                 LOGIN BUTTON
-              ===================================================== */
-
-              SizedBox(
-
-                width: double.infinity,
-
-                child: ElevatedButton(
-
-                  onPressed: () {
-
-                    Navigator.push(
-
-                      context,
-
-                      MaterialPageRoute(
-
-                        builder: (_) =>
-                            LoginScreen(),
+                        borderRadius:
+                            BorderRadius.circular(
+                                28),
                       ),
-                    );
-                  },
 
-                  style:
-                      ElevatedButton.styleFrom(
+                      child: const Icon(
 
-                    backgroundColor:
-                        const Color(
-                            0xFF1B1C1C),
+                        Icons.inventory_2_outlined,
 
-                    foregroundColor:
-                        Colors.white,
+                        color: Colors.white,
 
-                    padding:
-                        const EdgeInsets.symmetric(
-                      vertical: 18,
-                    ),
-
-                    shape:
-                        RoundedRectangleBorder(
-
-                      borderRadius:
-                          BorderRadius.circular(
-                              22),
+                        size: 48,
+                      ),
                     ),
                   ),
 
-                  child: const Text(
+                  const SizedBox(height: 30),
 
-                    "LOGIN",
+                  /// TITLE
+                  const Center(
 
-                    style: TextStyle(
+                    child: Text(
 
-                      fontWeight:
-                          FontWeight.bold,
+                      "Borezy",
 
-                      letterSpacing: 1,
+                      style: TextStyle(
+
+                        fontSize: 36,
+
+                        fontWeight:
+                            FontWeight.bold,
+
+                        color:
+                            Color(0xFF1B1C1C),
+                      ),
                     ),
                   ),
-                ),
-              ),
 
-              const SizedBox(height: 14),
+                  const SizedBox(height: 12),
 
-              /* =====================================================
-                 BOOK DEMO
-              ===================================================== */
+                  Center(
 
-              SizedBox(
+                    child: Text(
 
-                width: double.infinity,
+                      "Rental business management platform for inventory, bookings, customers and operational workflows.",
 
-                child: OutlinedButton(
+                      textAlign: TextAlign.center,
 
-                  onPressed: () {
+                      style: TextStyle(
 
-                    ScaffoldMessenger.of(
-                            context)
-                        .showSnackBar(
+                        fontSize: 15,
 
-                      const SnackBar(
+                        height: 1.5,
 
-                        content: Text(
-                          "Book Demo Coming Soon",
+                        color:
+                            Colors.grey.shade700,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 40),
+
+                  /// FEATURES
+                  _featureTile(
+                    Icons.inventory_2_outlined,
+                    "Inventory Management",
+                  ),
+
+                  _featureTile(
+                    Icons.calendar_month_rounded,
+                    "Rental Booking Tracking",
+                  ),
+
+                  _featureTile(
+                    Icons.people_outline,
+                    "Customer Management",
+                  ),
+
+                  _featureTile(
+                    Icons.bar_chart_outlined,
+                    "Business Analytics",
+                  ),
+
+                  _featureTile(
+                    Icons.local_shipping_outlined,
+                    "Pickup & Return Operations",
+                  ),
+
+                  const SizedBox(height: 40),
+
+                  /// GET STARTED
+                  SizedBox(
+
+                    width: double.infinity,
+
+                    child: ElevatedButton(
+
+                      onPressed: () {
+
+                        Navigator.push(
+
+                          context,
+
+                          MaterialPageRoute(
+
+                            builder: (_) =>
+                                const SignupScreen(),
+                          ),
+                        );
+                      },
+
+                      style:
+                          ElevatedButton.styleFrom(
+
+                        backgroundColor:
+                            const Color(
+                                0xFFD4AF37),
+
+                        foregroundColor:
+                            Colors.black,
+
+                        padding:
+                            const EdgeInsets.symmetric(
+                          vertical: 18,
+                        ),
+
+                        shape:
+                            RoundedRectangleBorder(
+
+                          borderRadius:
+                              BorderRadius.circular(
+                                  22),
                         ),
                       ),
-                    );
-                  },
 
-                  style:
-                      OutlinedButton.styleFrom(
+                      child: const Text(
 
-                    foregroundColor:
-                        const Color(
-                            0xFF1B1C1C),
+                        "GET STARTED",
 
-                    padding:
-                        const EdgeInsets.symmetric(
-                      vertical: 18,
-                    ),
+                        style: TextStyle(
 
-                    side: BorderSide(
-                      color:
-                          Colors.grey.shade300,
-                    ),
+                          fontWeight:
+                              FontWeight.bold,
 
-                    shape:
-                        RoundedRectangleBorder(
-
-                      borderRadius:
-                          BorderRadius.circular(
-                              22),
+                          letterSpacing: 1,
+                        ),
+                      ),
                     ),
                   ),
 
-                  child: const Text(
+                  const SizedBox(height: 14),
 
-                    "BOOK DEMO",
+                  /// LOGIN
+                  SizedBox(
 
-                    style: TextStyle(
+                    width: double.infinity,
 
-                      fontWeight:
-                          FontWeight.bold,
+                    child: ElevatedButton(
 
-                      letterSpacing: 1,
+                      onPressed: () {
+
+                        Navigator.push(
+
+                          context,
+
+                          MaterialPageRoute(
+
+                            builder: (_) =>
+                                LoginScreen(),
+                          ),
+                        );
+                      },
+
+                      style:
+                          ElevatedButton.styleFrom(
+
+                        backgroundColor:
+                            const Color(
+                                0xFF1B1C1C),
+
+                        foregroundColor:
+                            Colors.white,
+
+                        padding:
+                            const EdgeInsets.symmetric(
+                          vertical: 18,
+                        ),
+
+                        shape:
+                            RoundedRectangleBorder(
+
+                          borderRadius:
+                              BorderRadius.circular(
+                                  22),
+                        ),
+                      ),
+
+                      child: const Text(
+
+                        "LOGIN",
+
+                        style: TextStyle(
+
+                          fontWeight:
+                              FontWeight.bold,
+
+                          letterSpacing: 1,
+                        ),
+                      ),
                     ),
                   ),
-                ),
+
+                  const SizedBox(height: 30),
+                ],
               ),
-
-              const SizedBox(height: 20),
-            ],
+            ),
           ),
         ),
       ),
@@ -329,16 +337,19 @@ class WelcomeScreen extends StatelessWidget {
 
           const SizedBox(width: 14),
 
-          Text(
+          Expanded(
 
-            title,
+            child: Text(
 
-            style: const TextStyle(
+              title,
 
-              fontSize: 15,
+              style: const TextStyle(
 
-              fontWeight:
-                  FontWeight.w600,
+                fontSize: 15,
+
+                fontWeight:
+                    FontWeight.w600,
+              ),
             ),
           )
         ],
