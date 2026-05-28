@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import 'login_screen.dart';
-import 'signup_screen.dart';
 
 class WelcomeScreen extends StatelessWidget {
 
@@ -17,278 +16,204 @@ class WelcomeScreen extends StatelessWidget {
 
       body: SafeArea(
 
-        child: SingleChildScrollView(
+        child: Padding(
 
-          physics:
-              const BouncingScrollPhysics(),
+          padding:
+              const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 20,
+          ),
 
-          child: ConstrainedBox(
+          child: Column(
 
-            constraints: BoxConstraints(
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
 
-              minHeight:
-                  MediaQuery.of(context)
-                          .size
-                          .height -
-                      MediaQuery.of(context)
-                          .padding
-                          .top,
-            ),
+            children: [
 
-            child: Padding(
+              const Spacer(),
 
-              padding:
-                  const EdgeInsets.symmetric(
-                horizontal: 24,
-                vertical: 20,
+              /* =====================================================
+                 LOGO
+              ===================================================== */
+
+              Center(
+
+                child: Container(
+
+                  height: 90,
+                  width: 90,
+
+                  decoration: BoxDecoration(
+
+                    gradient:
+                        const LinearGradient(
+
+                      colors: [
+
+                        Color(0xFFD4AF37),
+
+                        Color(0xFFF4D58D),
+                      ],
+                    ),
+
+                    borderRadius:
+                        BorderRadius.circular(
+                            28),
+                  ),
+
+                  child: const Icon(
+
+                    Icons.storefront_rounded,
+
+                    color: Colors.white,
+
+                    size: 48,
+                  ),
+                ),
               ),
 
-              child: Column(
+              const SizedBox(height: 30),
 
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+              /* =====================================================
+                 TITLE
+              ===================================================== */
 
-                children: [
+              const Center(
 
-                  const SizedBox(height: 30),
+                child: Text(
 
-                  /// LOGO
-                  Center(
+                  "Borezy",
 
-                    child: Container(
+                  style: TextStyle(
 
-                      height: 90,
-                      width: 90,
+                    fontSize: 36,
 
-                      decoration: BoxDecoration(
+                    fontWeight:
+                        FontWeight.bold,
 
-                        gradient:
-                            const LinearGradient(
-
-                          colors: [
-
-                            Color(0xFFD4AF37),
-
-                            Color(0xFFF4D58D),
-                          ],
-                        ),
-
-                        borderRadius:
-                            BorderRadius.circular(
-                                28),
-                      ),
-
-                      child: const Icon(
-
-                        Icons.inventory_2_outlined,
-
-                        color: Colors.white,
-
-                        size: 48,
-                      ),
-                    ),
+                    color:
+                        Color(0xFF1B1C1C),
                   ),
-
-                  const SizedBox(height: 30),
-
-                  /// TITLE
-                  const Center(
-
-                    child: Text(
-
-                      "Borezy",
-
-                      style: TextStyle(
-
-                        fontSize: 36,
-
-                        fontWeight:
-                            FontWeight.bold,
-
-                        color:
-                            Color(0xFF1B1C1C),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  Center(
-
-                    child: Text(
-
-                      "Rental business management platform for inventory, bookings, customers and operational workflows.",
-
-                      textAlign: TextAlign.center,
-
-                      style: TextStyle(
-
-                        fontSize: 15,
-
-                        height: 1.5,
-
-                        color:
-                            Colors.grey.shade700,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 40),
-
-                  /// FEATURES
-                  _featureTile(
-                    Icons.inventory_2_outlined,
-                    "Inventory Management",
-                  ),
-
-                  _featureTile(
-                    Icons.calendar_month_rounded,
-                    "Rental Booking Tracking",
-                  ),
-
-                  _featureTile(
-                    Icons.people_outline,
-                    "Customer Management",
-                  ),
-
-                  _featureTile(
-                    Icons.bar_chart_outlined,
-                    "Business Analytics",
-                  ),
-
-                  _featureTile(
-                    Icons.local_shipping_outlined,
-                    "Pickup & Return Operations",
-                  ),
-
-                  const SizedBox(height: 40),
-
-                  /// GET STARTED
-                  SizedBox(
-
-                    width: double.infinity,
-
-                    child: ElevatedButton(
-
-                      onPressed: () {
-
-                        Navigator.push(
-
-                          context,
-
-                          MaterialPageRoute(
-
-                            builder: (_) =>
-                                const SignupScreen(),
-                          ),
-                        );
-                      },
-
-                      style:
-                          ElevatedButton.styleFrom(
-
-                        backgroundColor:
-                            const Color(
-                                0xFFD4AF37),
-
-                        foregroundColor:
-                            Colors.black,
-
-                        padding:
-                            const EdgeInsets.symmetric(
-                          vertical: 18,
-                        ),
-
-                        shape:
-                            RoundedRectangleBorder(
-
-                          borderRadius:
-                              BorderRadius.circular(
-                                  22),
-                        ),
-                      ),
-
-                      child: const Text(
-
-                        "GET STARTED",
-
-                        style: TextStyle(
-
-                          fontWeight:
-                              FontWeight.bold,
-
-                          letterSpacing: 1,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 14),
-
-                  /// LOGIN
-                  SizedBox(
-
-                    width: double.infinity,
-
-                    child: ElevatedButton(
-
-                      onPressed: () {
-
-                        Navigator.push(
-
-                          context,
-
-                          MaterialPageRoute(
-
-                            builder: (_) =>
-                                LoginScreen(),
-                          ),
-                        );
-                      },
-
-                      style:
-                          ElevatedButton.styleFrom(
-
-                        backgroundColor:
-                            const Color(
-                                0xFF1B1C1C),
-
-                        foregroundColor:
-                            Colors.white,
-
-                        padding:
-                            const EdgeInsets.symmetric(
-                          vertical: 18,
-                        ),
-
-                        shape:
-                            RoundedRectangleBorder(
-
-                          borderRadius:
-                              BorderRadius.circular(
-                                  22),
-                        ),
-                      ),
-
-                      child: const Text(
-
-                        "LOGIN",
-
-                        style: TextStyle(
-
-                          fontWeight:
-                              FontWeight.bold,
-
-                          letterSpacing: 1,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 30),
-                ],
+                ),
               ),
-            ),
+
+              const SizedBox(height: 12),
+
+              Center(
+
+                child: Text(
+
+                  "Fashion Rental Business Platform",
+
+                  textAlign: TextAlign.center,
+
+                  style: TextStyle(
+
+                    fontSize: 15,
+
+                    height: 1.5,
+
+                    color:
+                        Colors.grey.shade700,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 50),
+
+              /* =====================================================
+                 FEATURES
+              ===================================================== */
+
+              _featureTile(
+                Icons.calendar_month_rounded,
+                "Booking Management",
+              ),
+
+              _featureTile(
+                Icons.people_alt_rounded,
+                "Customer CRM",
+              ),
+
+              _featureTile(
+                Icons.inventory_2_rounded,
+                "Inventory Tracking",
+              ),
+
+              _featureTile(
+                Icons.analytics_rounded,
+                "Business Analytics",
+              ),
+
+              const Spacer(),
+
+              /* =====================================================
+                 LOGIN BUTTON
+              ===================================================== */
+
+              SizedBox(
+
+                width: double.infinity,
+
+                child: ElevatedButton(
+
+                  onPressed: () {
+
+                    Navigator.push(
+
+                      context,
+
+                      MaterialPageRoute(
+
+                        builder: (_) =>
+                            LoginScreen(),
+                      ),
+                    );
+                  },
+
+                  style:
+                      ElevatedButton.styleFrom(
+
+                    backgroundColor:
+                        const Color(
+                            0xFF1B1C1C),
+
+                    foregroundColor:
+                        Colors.white,
+
+                    padding:
+                        const EdgeInsets.symmetric(
+                      vertical: 18,
+                    ),
+
+                    shape:
+                        RoundedRectangleBorder(
+
+                      borderRadius:
+                          BorderRadius.circular(
+                              22),
+                    ),
+                  ),
+
+                  child: const Text(
+
+                    "LOGIN",
+
+                    style: TextStyle(
+
+                      fontWeight:
+                          FontWeight.bold,
+
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ),
+              ),
+
+            
+
+            ],
           ),
         ),
       ),
@@ -337,19 +262,16 @@ class WelcomeScreen extends StatelessWidget {
 
           const SizedBox(width: 14),
 
-          Expanded(
+          Text(
 
-            child: Text(
+            title,
 
-              title,
+            style: const TextStyle(
 
-              style: const TextStyle(
+              fontSize: 15,
 
-                fontSize: 15,
-
-                fontWeight:
-                    FontWeight.w600,
-              ),
+              fontWeight:
+                  FontWeight.w600,
             ),
           )
         ],

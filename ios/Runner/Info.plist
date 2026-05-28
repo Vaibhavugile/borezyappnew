@@ -67,14 +67,14 @@
 
 	<!-- CAMERA -->
 	<key>NSCameraUsageDescription</key>
-	<string>This app uses the camera to capture images.</string>
+<string>Borezy uses the camera to capture attendance selfies, upload product photos, and attach booking images for rental management.</string>
 
 	<!-- PHOTO LIBRARY -->
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>This app accesses photos for uploads.</string>
+<string>Borezy accesses your photo library to upload product images and booking attachments.</string>
 
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>This app saves images to your photo library.</string>
+<string>Borezy may save captured images to your photo library when uploading rental product or booking photos.</string>
 
 	<!-- LOCATION -->
 	<key>NSLocationWhenInUseUsageDescription</key>

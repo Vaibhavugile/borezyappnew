@@ -7,60 +7,29 @@ class UserProvider extends ChangeNotifier {
   Map<String, dynamic>? get userData =>
       _userData;
 
-  /// =====================================
-  /// BASIC GETTERS
-  /// =====================================
-
   String get branchCode =>
       _userData?['branchCode'] ?? "";
 
-  String get userName =>
-      _userData?['name'] ??
-      _userData?['userName'] ??
-      "Guest User";
+  String? get userName =>
+      _userData?['name'];
 
-  String get role =>
-      _userData?['role'] ?? "";
+  String? get role =>
+      _userData?['role'];
 
-  String get userId =>
-      _userData?['userId'] ?? "";
+  String? get userId =>
+      _userData?['userId'];
 
-  String get email =>
-      _userData?['email'] ?? "";
-
-  /// =====================================
-  /// GUEST MODE
-  /// =====================================
-
-  bool get isGuest =>
-      _userData?['isGuest'] == true;
-
-  bool get isCustomer =>
-      role == "customer";
-
-  bool get isStaff =>
-      role == "admin" ||
-      role == "branch" ||
-      role == "subuser";
-
-  /// =====================================
   /// INITIAL RESTORE
-  /// =====================================
-
   void setInitialUserData(
-    Map<String, dynamic>? data,
-  ) {
+  Map<String, dynamic>? data,
+) {
 
-    debugPrint(
-      "INITIAL USER DATA: $data",
-    );
+  debugPrint(
+    "INITIAL USER DATA: $data",
+  );
 
-    _userData = data;
-  }
-
-  /// =====================================
-  /// SET USER DATA
-  /// =====================================
+  _userData = data;
+}
 
   void setUserData(
     Map<String, dynamic> data,
@@ -74,10 +43,6 @@ class UserProvider extends ChangeNotifier {
 
     notifyListeners();
   }
-
-  /// =====================================
-  /// CLEAR USER
-  /// =====================================
 
   void clearUserData() {
 

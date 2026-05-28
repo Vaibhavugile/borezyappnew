@@ -75,43 +75,6 @@ class _GateScreenState
     if (userProvider.userData == null) {
 
       /// CHECK SUPER ADMIN
-      /// =====================================
-/// CHECK CUSTOMER
-/// =====================================
-
-final customerDoc = await firestore
-    .collection('customers')
-    .where(
-      'email',
-      isEqualTo: authUser.email,
-    )
-    .get();
-
-if (customerDoc.docs.isNotEmpty) {
-
-  final data =
-      customerDoc.docs.first.data();
-
-  data['role'] = 'customer';
-
-  data['userId'] = authUser.uid;
-
-  userProvider.setUserData(data);
-
-  if (!mounted) return;
-
-  Navigator.pushReplacement(
-
-    context,
-
-    MaterialPageRoute(
-      builder: (_) =>
-          const MainScreen(),
-    ),
-  );
-
-  return;
-}
       final adminDoc = await firestore
           .collection('superadmins')
           .where(
@@ -191,28 +154,6 @@ if (customerDoc.docs.isNotEmpty) {
     debugPrint(
       "BranchCode: ${userProvider.branchCode}",
     );
-    /// =====================================
-/// CUSTOMER USERS SKIP ATTENDANCE
-/// =====================================
-
-if (userProvider.userData != null &&
-    userProvider.userData!['role'] ==
-        'customer') {
-
-  if (!mounted) return;
-
-  Navigator.pushReplacement(
-
-    context,
-
-    MaterialPageRoute(
-      builder: (_) =>
-          const MainScreen(),
-    ),
-  );
-
-  return;
-}
 
     String userId = authUser.uid;
 

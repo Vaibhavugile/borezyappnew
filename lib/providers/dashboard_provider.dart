@@ -36,31 +36,7 @@ List returnPendingDocs = [];
   double depositPendingToday = 0;
 
   Future<void> fetchData() async {
-
-  /// =====================================
-  /// GUEST / EMPTY BRANCH
-  /// =====================================
-
-  if (branchCode.isEmpty ||
-      branchCode == "0707") {
-
-    loading = false;
-
-    createdDocs = [];
-    pickupDocs = [];
-    returnDocs = [];
-
-    createdCount = 0;
-    pickupTotal = 0;
-    returnTotal = 0;
-
-    productsOutToday = 0;
-    productsInToday = 0;
-
-    notifyListeners();
-
-    return;
-  }
+  if(branchCode.isEmpty) return;
     loading = true;
     notifyListeners();
 
